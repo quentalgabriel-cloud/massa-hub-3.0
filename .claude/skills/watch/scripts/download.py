@@ -68,6 +68,7 @@ def download_url(url: str, out_dir: Path) -> dict:
 
     cmd = [
         "yt-dlp",
+        "--no-check-certificates",
         "-N", "8",
         "-f", "bv*[height<=720]+ba/b[height<=720]/bv+ba/b",
         "--merge-output-format", "mp4",
