@@ -21,6 +21,19 @@ if ! command -v yt-dlp >/dev/null 2>&1 && ! python3 -m yt_dlp --version >/dev/nu
   pip3 install --quiet --user yt-dlp
 fi
 
+# faster-whisper (Whisper LOCAL, grátis) — transcreve vídeos sem legenda sem API paga.
+# Best-effort: se a instalação pesada falhar, frames + legendas nativas seguem funcionando.
+WATCH_WHISPER_MODEL="${WATCH_WHISPER_MODEL:-base}"
+if ! python3 -c "import faster_whisper" >/dev/null 2>&1; then
+  pip3 install --quiet --user faster-whisper || true
+fi
+# Pré-baixa o modelo uma vez (fica no cache do container) p/ a 1ª transcrição não travar.
+python3 - "$WATCH_WHISPER_MODEL" >/dev/null 2>&1 <<'PY' || true
+import sys
+from faster_whisper import WhisperModel
+WhisperModel(sys.argv[1], device="cpu", compute_type="int8")
+PY
+
 # pip --user instala em ~/.local/bin; garante no PATH da sessão.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$CLAUDE_ENV_FILE"

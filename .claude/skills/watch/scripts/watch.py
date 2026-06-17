@@ -19,6 +19,7 @@ from download import download, is_url  # noqa: E402
 from frames import MAX_FPS, auto_fps, auto_fps_focus, extract, format_time, get_metadata, parse_time  # noqa: E402
 from transcribe import filter_range, format_transcript, parse_vtt  # noqa: E402
 from whisper import load_api_key, transcribe_video  # noqa: E402
+import local_whisper  # noqa: E402
 
 
 def main() -> int:
@@ -40,9 +41,12 @@ def main() -> int:
     )
     ap.add_argument(
         "--whisper",
-        choices=["groq", "openai"],
+        choices=["local", "groq", "openai"],
         default=None,
-        help="Force a specific Whisper backend. Default: prefer Groq, fall back to OpenAI.",
+        help=(
+            "Force a transcription backend. Default: local faster-whisper (free, runs on CPU). "
+            "groq/openai use paid APIs and require a key."
+        ),
     )
     args = ap.parse_args()
 
@@ -117,31 +121,53 @@ def main() -> int:
             print(f"[watch] subtitle parse failed: {exc}", file=sys.stderr)
 
     if not transcript_segments and not args.no_whisper:
-        backend, api_key = load_api_key(args.whisper)
-        if backend and api_key:
+        choice = args.whisper  # 'local' | 'groq' | 'openai' | None
+        want_api = choice in ("groq", "openai")
+        want_local = choice == "local" or choice is None
+        transcribed = False
+
+        # Free path first: local faster-whisper (default, or forced with --whisper local).
+        if want_local and local_whisper.is_available():
             try:
-                all_segments, used_backend = transcribe_video(
-                    video_path,
-                    work / "audio.mp3",
-                    backend=backend,
-                    api_key=api_key,
+                all_segments, label = local_whisper.transcribe_video_local(
+                    video_path, work / "audio.mp3"
                 )
                 transcript_segments = filter_range(all_segments, start_sec, end_sec) if focused else all_segments
                 transcript_text = format_transcript(transcript_segments)
-                transcript_source = f"whisper ({used_backend})"
+                transcript_source = f"whisper {label}"
+                transcribed = True
             except SystemExit as exc:
-                print(f"[watch] whisper fallback failed: {exc}", file=sys.stderr)
-        else:
-            hint = (
-                f"--whisper {args.whisper} was set but the matching API key is missing"
-                if args.whisper else
-                "no subtitles and no Whisper API key found"
-            )
-            setup_py = SCRIPT_DIR / "setup.py"
-            print(
-                f"[watch] {hint} — run `python3 {setup_py}` to enable the Whisper fallback",
-                file=sys.stderr,
-            )
+                print(f"[watch] local whisper failed: {exc}", file=sys.stderr)
+
+        # Paid path: only when explicitly forced, or as a last resort when local isn't installed.
+        if not transcribed and (want_api or (choice is None and not local_whisper.is_available())):
+            backend, api_key = load_api_key(choice if want_api else None)
+            if backend and api_key:
+                try:
+                    all_segments, used_backend = transcribe_video(
+                        video_path,
+                        work / "audio.mp3",
+                        backend=backend,
+                        api_key=api_key,
+                    )
+                    transcript_segments = filter_range(all_segments, start_sec, end_sec) if focused else all_segments
+                    transcript_text = format_transcript(transcript_segments)
+                    transcript_source = f"whisper ({used_backend})"
+                    transcribed = True
+                except SystemExit as exc:
+                    print(f"[watch] whisper API fallback failed: {exc}", file=sys.stderr)
+
+        if not transcribed:
+            if choice == "local":
+                hint = "local whisper requested but faster-whisper is not installed — run: pip install --user faster-whisper"
+            elif want_api:
+                hint = f"--whisper {choice} was set but the matching API key is missing"
+            else:
+                hint = (
+                    "no subtitles, and no transcription backend available — install faster-whisper "
+                    "for free local transcription (pip install --user faster-whisper), or set an API key"
+                )
+            print(f"[watch] {hint}", file=sys.stderr)
 
     info = dl.get("info") or {}
 

@@ -1,6 +1,6 @@
 ---
 name: watch
-description: Watch a video (URL or local path). Downloads with yt-dlp, extracts auto-scaled frames with ffmpeg, pulls the transcript from captions (or Whisper API fallback), and hands the result to Claude so it can answer questions about what's in the video.
+description: Watch a video (URL or local path). Downloads with yt-dlp, extracts auto-scaled frames with ffmpeg, pulls the transcript from captions (or local Whisper via faster-whisper — free, no API key), and hands the result to Claude so it can answer questions about what's in the video.
 argument-hint: "<video-url-or-path> [question]"
 allowed-tools: Bash, Read, AskUserQuestion
 homepage: https://github.com/bradautomates/claude-video
@@ -12,13 +12,15 @@ user-invocable: true
 
 # /watch — Claude watches a video
 
-You don't have a video input; this skill gives you one. A Python script downloads the video, extracts frames as JPEGs, gets a timestamped transcript (native captions first, then Whisper API as fallback), and prints frame paths. You then `Read` each frame path to see the images and combine them with the transcript to answer the user.
+You don't have a video input; this skill gives you one. A Python script downloads the video, extracts frames as JPEGs, gets a timestamped transcript (native captions first, then **local Whisper via faster-whisper** — free, runs on CPU, no API key — as the fallback), and prints frame paths. You then `Read` each frame path to see the images and combine them with the transcript to answer the user.
+
+> **This install is configured free-first.** The default transcription fallback is local `faster-whisper` (no API, no cost). Paid Groq/OpenAI Whisper is available but **opt-in only** via `--whisper groq|openai`. In Claude Code on the web, the SessionStart hook installs `faster-whisper` and pre-downloads the model, so transcription works out of the box with no key.
 
 ## Step 0 — Setup preflight (runs every `/watch` invocation, silent on success)
 
 **Python interpreter:** every `python3 ...` command in this skill is for macOS/Linux. On **Windows**, substitute `python` — the `python3` command on Windows is the Microsoft Store stub and will not run the script.
 
-Before every `/watch` run, verify that dependencies and an API key are in place:
+Before every `/watch` run, verify the runtime is in place:
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/scripts/setup.py" --check
@@ -26,13 +28,15 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/setup.py" --check
 
 This is a <100ms lookup. On exit 0, the script emits **nothing** — proceed to Step 1 without comment. **Do NOT announce "setup is complete" to the user** — they don't need a status message on every turn. The only acceptable user-visible output from Step 0 is when remediation is required.
 
+A transcription backend = **either** free local `faster-whisper` **or** a paid API key. With this free-first install, local is normally present (the SessionStart hook installs it), so `--check` returns 0 with no key.
+
 On non-zero exit, follow the table:
 
 | Exit | Meaning | Action |
 |------|---------|--------|
-| `2` | Missing binaries (`ffmpeg` / `ffprobe` / `yt-dlp`) | Run installer |
-| `3` | No Whisper API key | Run installer to scaffold `.env`, then ask user for a key |
-| `4` | Both missing | Run installer, then ask for a key |
+| `2` | Missing binaries (`ffmpeg` / `ffprobe` / `yt-dlp`) | Run installer / re-run the SessionStart hook |
+| `3` | No transcription backend (no local whisper AND no API key) | Run `pip install --user faster-whisper` (free) — no key needed |
+| `4` | Both missing | Install binaries, then `pip install --user faster-whisper` |
 
 The installer is idempotent — safe to re-run:
 
@@ -40,11 +44,11 @@ The installer is idempotent — safe to re-run:
 python3 "${CLAUDE_SKILL_DIR}/scripts/setup.py"
 ```
 
-On macOS with Homebrew, it auto-installs `ffmpeg` and `yt-dlp`. On Linux/Windows, it prints the exact install commands for the user to run. It scaffolds `~/.config/watch/.env` with commented placeholders at `0600` perms, and writes `SETUP_COMPLETE=true` once deps + a key are in place so the next session knows this user has already been through the wizard.
+On macOS with Homebrew, it auto-installs `ffmpeg` and `yt-dlp`. On Linux/Windows, it prints the exact install commands. It scaffolds `~/.config/watch/.env` with commented placeholders at `0600` perms, and writes `SETUP_COMPLETE=true` once a transcription backend is available.
 
-**If an API key is still missing after install:** use `AskUserQuestion` to ask the user whether they have a Groq API key (preferred — cheaper, faster) or an OpenAI key. Then write it into `~/.config/watch/.env` — set the matching `GROQ_API_KEY=...` or `OPENAI_API_KEY=...` line. If they don't want to set up Whisper, proceed with `--no-whisper` and tell them videos without native captions will come back frames-only.
+**If exit is `3` (no transcription backend):** prefer the free fix — run `pip install --user faster-whisper`; no API key, no cost. Only fall back to a paid key if the user explicitly wants it (then write `GROQ_API_KEY=...` or `OPENAI_API_KEY=...` into `~/.config/watch/.env` and run with `--whisper groq|openai`). If the user wants neither, proceed with `--no-whisper` and tell them caption-less videos come back frames-only.
 
-**Structured mode (optional):** `python3 "${CLAUDE_SKILL_DIR}/scripts/setup.py" --json` emits `{status, first_run, missing_binaries, whisper_backend, has_api_key, config_file, platform}` where `status` is one of `ready | needs_install | needs_key | needs_install_and_key`. Use this when you need to branch on specifics (e.g. "is this the user's very first run?" → `first_run: true`).
+**Structured mode (optional):** `python3 "${CLAUDE_SKILL_DIR}/scripts/setup.py" --json` emits `{status, first_run, missing_binaries, whisper_backend, has_api_key, has_local_whisper, config_file, platform}` where `status` is one of `ready | needs_install | needs_key | needs_install_and_key`. Use this when you need to branch on specifics (e.g. "is this the user's very first run?" → `first_run: true`).
 
 Within a single session, you can skip Step 0 on follow-up `/watch` calls — once `--check` returned 0, nothing about the environment changes between turns.
 
@@ -81,8 +85,9 @@ Optional flags:
 - `--resolution W` — change frame width in px (default 512; bump to 1024 only if the user needs to read on-screen text)
 - `--fps F` — override auto-fps (clamped to 2 fps max)
 - `--out-dir DIR` — keep working files somewhere specific (default: an auto-generated tmp dir)
-- `--whisper groq|openai` — force a specific Whisper backend (default: prefer Groq if both keys exist)
+- `--whisper local|groq|openai` — force a transcription backend. **Default: `local`** (free faster-whisper on CPU). `groq`/`openai` use paid APIs and need a key.
 - `--no-whisper` — disable the Whisper fallback entirely (frames-only if no captions)
+- Model size for local whisper is set by env `WATCH_WHISPER_MODEL` (default `base`; bump to `small`/`medium` for better accuracy at the cost of speed).
 
 ### Focusing on a section (higher frame rate)
 
@@ -125,22 +130,23 @@ If the user asked a specific question, answer it directly citing timestamps. If 
 
 ## Transcription
 
-The script gets a timestamped transcript in one of two ways:
+The script gets a timestamped transcript, trying backends in this order:
 
 1. **Native captions (free, preferred).** yt-dlp pulls manual or auto-generated subtitles from the source platform if available.
-2. **Whisper API fallback.** If no captions came back (or the source is a local file), the script extracts audio (`ffmpeg -vn -ac 1 -ar 16000 -b:a 64k`, ~0.5 MB/min) and uploads it to whichever Whisper API has a key configured:
-   - **Groq** — `whisper-large-v3`. Preferred default: cheaper, faster. Get a key at console.groq.com/keys.
-   - **OpenAI** — `whisper-1`. Fallback. Get a key at platform.openai.com/api-keys.
+2. **Local Whisper — `faster-whisper` (free, DEFAULT fallback).** If no captions came back (or the source is a local file), the script extracts audio (`ffmpeg -vn -ac 1 -ar 16000 -b:a 64k`) and transcribes it **on this machine** with `faster-whisper` (CTranslate2, CPU, int8). No network call beyond a one-time model download, no API key, no cost. Model size via `WATCH_WHISPER_MODEL` (default `base`).
+3. **Paid Whisper API — opt-in only.** Used **only** when explicitly forced with `--whisper groq|openai` (and a key is set). Nothing is sent to a paid API by default.
+   - **Groq** — `whisper-large-v3`. Cheaper/faster of the two. Key at console.groq.com/keys.
+   - **OpenAI** — `whisper-1`. Key at platform.openai.com/api-keys.
 
-Both keys live in `~/.config/watch/.env`. The script prefers Groq when both are set; override with `--whisper openai` to force OpenAI. Use `--no-whisper` to skip the fallback entirely.
+API keys (only needed for the opt-in paid path) live in `~/.config/watch/.env`. Use `--no-whisper` to skip the fallback entirely (frames-only).
 
 ## Failure modes and handling
 
 - **Setup preflight failed** → run `python3 "${CLAUDE_SKILL_DIR}/scripts/setup.py"` (auto-installs ffmpeg/yt-dlp via brew on macOS, scaffolds the `.env`). For API key, ask the user via `AskUserQuestion` and write it to `~/.config/watch/.env`.
-- **No transcript available** → captions missing AND (no Whisper key OR Whisper API failed). Script prints a hint pointing to setup. Proceed frames-only and tell the user.
+- **No transcript available** → captions missing AND local whisper not installed AND (no API key OR API failed). Script prints a hint. The free fix is `pip install --user faster-whisper`. Otherwise proceed frames-only and tell the user.
 - **Long video warning printed** → acknowledge it in your answer. Offer to re-run focused on a specific section via `--start`/`--end` rather than a sparse full-video scan.
 - **Download fails** → yt-dlp's error goes to stderr. If it's a login-required or region-locked video, tell the user plainly; do not keep retrying.
-- **Whisper request fails** → the error is printed to stderr (likely: invalid key, rate limit, or 25 MB upload limit on a very long video). The report will say "none available" for transcript. You can retry with `--whisper openai` if Groq failed (or vice versa).
+- **Local whisper failed** → error on stderr (model download blocked, or out of memory on a huge model). Try a smaller `WATCH_WHISPER_MODEL` (e.g. `base` or `tiny`), or fall back to `--whisper groq` if a key is available.
 
 ## Token efficiency
 
@@ -156,18 +162,19 @@ If you already watched a video this session and the user asks a follow-up, do **
 **What this skill does:**
 - Runs `yt-dlp` locally to download the video and pull native captions when the source supports them (public data; the request goes directly to whatever host the URL points at)
 - Runs `ffmpeg` / `ffprobe` locally to extract frames as JPEGs and, when Whisper is needed, a mono 16 kHz audio clip
-- Sends the extracted audio clip to Groq's Whisper API (`api.groq.com/openai/v1/audio/transcriptions`) when `GROQ_API_KEY` is set (preferred — cheaper, faster)
-- Sends the extracted audio clip to OpenAI's audio transcription API (`api.openai.com/v1/audio/transcriptions`) when `OPENAI_API_KEY` is set and Groq is not, or when `--whisper openai` is forced
+- **Transcribes audio locally and offline by default** with `faster-whisper` — the audio never leaves the machine; the only network access is a one-time model download from the Hugging Face Hub
+- Sends the extracted audio clip to a **paid** API **only when explicitly forced** with `--whisper groq` (`api.groq.com`) or `--whisper openai` (`api.openai.com`) and the matching key is set. Never by default.
 - Writes the downloaded video, frames, audio, and an intermediate transcript to a working directory under the system temp dir (or `--out-dir` if specified) so Claude can `Read` them
-- Reads / creates `~/.config/watch/.env` (mode `0600`) to store the Whisper API key(s) and a `SETUP_COMPLETE` marker. As a fallback, also reads `.env` in the current working directory
+- Reads / creates `~/.config/watch/.env` (mode `0600`) to store optional Whisper API key(s) and a `SETUP_COMPLETE` marker. As a fallback, also reads `.env` in the current working directory
 
 **What this skill does NOT do:**
-- Does not upload the video itself to any API — only the extracted audio goes out, and only when native captions are missing AND Whisper is not disabled with `--no-whisper`
+- Does not send your audio or video to any third-party API in the default (free, local) flow — transcription runs on-device
+- Does not upload the video itself to any API — only the extracted audio, and only on the opt-in paid path
 - Does not access any platform account (no login, no session cookies, no posting)
 - Does not share API keys between providers (Groq key only goes to `api.groq.com`, OpenAI key only goes to `api.openai.com`)
 - Does not log, cache, or write API keys to stdout, stderr, or output files
 - Does not persist anything outside the working directory and `~/.config/watch/.env` — clean up the working directory when you're done (Step 5)
 
-**Bundled scripts:** `scripts/watch.py` (entry point), `scripts/download.py` (yt-dlp wrapper), `scripts/frames.py` (ffmpeg frame extraction), `scripts/transcribe.py` (caption selection + Whisper orchestration), `scripts/whisper.py` (Groq / OpenAI clients), `scripts/setup.py` (preflight + installer)
+**Bundled scripts:** `scripts/watch.py` (entry point), `scripts/download.py` (yt-dlp wrapper), `scripts/frames.py` (ffmpeg frame extraction), `scripts/transcribe.py` (caption parsing), `scripts/local_whisper.py` (**free local faster-whisper backend — default**), `scripts/whisper.py` (opt-in Groq / OpenAI API clients), `scripts/setup.py` (preflight + installer)
 
 Review scripts before first use to verify behavior.

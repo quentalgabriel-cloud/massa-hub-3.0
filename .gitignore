@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node / Next.js (futuro)
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Ambiente
+.env
+.env.local
+.env*.local
+
+# Working dirs da skill /watch
+watch-*/
+
+# SO / editor
+.DS_Store
+*.log
