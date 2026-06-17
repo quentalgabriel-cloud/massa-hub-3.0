@@ -1,0 +1,85 @@
+# Decisões & Anti-padrões (log)
+
+Registro do que já foi decidido para não reabrir por engano. Quando o Claude Code
+ou eu propusermos algo que contraria isto, este log prevalece.
+
+## Decididas
+
+| # | Decisão | Por quê |
+|---|---------|---------|
+| D1 | Reputação = Lastro (fatos), nunca score numérico | Score com base rala é vazio e intimidante; emerge de evidência, não de cálculo |
+| D2 | Prova bilateral é a unidade atômica | Análogo ao commit co-autorado; difícil de forjar; popula o grafo |
+| D3 | Ritmo (heatmap) é a assinatura visual | Comunica confiança visceralmente, como o contribution graph |
+| D4 | Assessor como cavalo de Troia, com categoria própria | Super-nó que destrava os outros 3 públicos |
+| D5 | Monetização: quem contrata paga; creator grátis sempre | Garante supply side; preserva proposta de reputação |
+| D6 | Sem ads, sem destaque pago, sem venda de dados | Conflitam com reputação verificável |
+| D7 | Claim profile só ancorado em trabalho real | Evita base degradável de perfis fantasma |
+| D8 | Fase 1 = só módulo de oportunidades | Único valor single-player antes de densidade |
+| D9 | Lançamento SLC, não MVP cru | Rede precisa parecer viva no dia 1 |
+| D10 | IA = um agente, uma chamada (não multi-agente) | Multi-agente resolve escala inexistente; gatilho do anti-padrão #1 |
+| D11 | Repo/Supabase/Vercel novos; Supabase como adapter | Começo limpo; hexagonal honesta; domínio não conhece o banco |
+
+## Em quarentena (não executar nesta fase)
+
+- Identity OS (pipeline multi-agente) — expansão de tese antes de execução.
+- Mapeamento em massa de creators via skill — base degradável; alavanca da fase 2.
+- Camada social (feed/conexões) — fase 2.
+- Curadoria educacional e clube de ferramentas — fase 3.
+- **Sistema multi-agente (orchestrator + agentes autônomos)** — ver D10 abaixo.
+
+## D10 — IA na Fase 1 é um agente, uma chamada (não multi-agente)
+
+Decisão: a extração de ticket é UMA chamada de IA, isolada num adapter. NÃO construir
+sistema multi-agente (orchestrator, research/memory/action agents, execução paralela).
+
+Por quê: multi-agente resolve um problema de escala que não existe com ~19 perfis. É
+a mesma sereia do Identity OS com roupa nova (gatilho do anti-padrão #1). Conteúdo de
+engajamento ("o futuro é times de IA") não é roadmap.
+
+O que aproveitar: o conceito de **pipeline** (extrair → validar → match → notificar)
+é útil como arquitetura mental para a fase 2+ — mas como pipeline determinístico e
+testável, com a IA entrando em pontos específicos, NÃO como enxame de agentes
+autônomos. Pipeline você controla e testa; enxame você reza pra funcionar.
+
+Quando reavaliar: fase 2+, com volume real de oportunidades circulando.
+
+## D11 — Repo, Supabase e Vercel novos e isolados
+
+Decisão: começar do zero, projetos novos. Supabase entra como adapter de repositório,
+nunca no domínio. Modelar domínio antes do schema. Elimina resíduo de Identity OS e
+mantém a hexagonal honesta desde o dia 1.
+
+## Anti-padrão nomeado #1
+
+**Expandir a tese antes de executar a tese.** Histórico: Identity OS virou
+"infraestrutura existencial"; um dashboard de produtividade colapsou 4 modelos de
+negócio. É o maior risco do projeto. O Claude Code deve sinalizar em tempo real
+quando um pedido sair do trilho da Fase 1.
+
+## Sobre os protótipos desta fase de design
+
+Foram criados 3 artefatos HTML (proposta visual, protótipo navegável, cockpit de
+produção). **São artefatos de comunicação, não código de produção.** Não portar o
+HTML para o Next.js — portar as *decisões de design* que eles carregam (estas specs).
+O produto é Next.js + arquitetura hexagonal; os protótipos são vanilla single-file.
+
+**Exceção importante — Screen 10 já tem protótipo funcional:** existe um React com
+extração real via API Anthropic (ver docs/specs/05-prototipo-screen10.md). Dele se
+porta o contrato de dados e a lógica de extração, não o componente. Decisões já
+tomadas: realce de origem, ticket squad-aware, campo de confiança, match por Lastro
+ilustrativo. Não reinventar.
+
+## Parcerias em avaliação (contexto, não escopo de código)
+
+- TKI Tecnologia (gateway white label): NÃO como fornecedor agora. Rafael (consultor)
+  como possível conector de pipeline — teste de indicação mútua por 90 dias, sem
+  formalizar, com filtro de reputação ligado.
+- Korun/Gabi: piloto de camada de reputação, co-branded ("Massa Reputação powered by
+  Korun"), 20–30 perfis, 60–90 dias. Não deslocar o módulo de oportunidades.
+
+## Deadline de referência
+
+YOUPIX Summit 2026 (29/set, SP) é o go/no-go do ano. Pagamento do estande até
+jul/2026. Critérios: módulo de oportunidades em beta com 20–50 oportunidades reais,
+200–500 perfis (concentração em assessores), 2–3 agências testando, 3–5 parcerias.
+Se não atingir: ir como visitante, mirar 2027.
