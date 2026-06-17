@@ -22,8 +22,9 @@ if ! command -v yt-dlp >/dev/null 2>&1 && ! python3 -m yt_dlp --version >/dev/nu
 fi
 
 # faster-whisper (Whisper LOCAL, grátis) — transcreve vídeos sem legenda sem API paga.
+# Modelo 'small': bom equilíbrio precisão/velocidade em PT e EN (detecção automática).
 # Best-effort: se a instalação pesada falhar, frames + legendas nativas seguem funcionando.
-WATCH_WHISPER_MODEL="${WATCH_WHISPER_MODEL:-base}"
+WATCH_WHISPER_MODEL="${WATCH_WHISPER_MODEL:-small}"
 if ! python3 -c "import faster_whisper" >/dev/null 2>&1; then
   pip3 install --quiet --user faster-whisper || true
 fi
@@ -35,6 +36,8 @@ WhisperModel(sys.argv[1], device="cpu", compute_type="int8")
 PY
 
 # pip --user instala em ~/.local/bin; garante no PATH da sessão.
+# Fixa o modelo padrão do /watch p/ as chamadas desta sessão.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$CLAUDE_ENV_FILE"
+  echo "export WATCH_WHISPER_MODEL=\"$WATCH_WHISPER_MODEL\"" >> "$CLAUDE_ENV_FILE"
 fi

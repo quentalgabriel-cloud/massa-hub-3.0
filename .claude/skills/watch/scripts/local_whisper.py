@@ -23,7 +23,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from whisper import extract_audio  # noqa: E402  (reuse the mono-16k extractor)
 
 
-DEFAULT_MODEL = (os.environ.get("WATCH_WHISPER_MODEL") or "base").strip() or "base"
+DEFAULT_MODEL = (os.environ.get("WATCH_WHISPER_MODEL") or "small").strip() or "small"
 DEFAULT_COMPUTE = (os.environ.get("WATCH_WHISPER_COMPUTE") or "int8").strip() or "int8"
 
 
