@@ -128,12 +128,10 @@ function IndicadorConfianca({ valor }: { valor: number }) {
 function PainelTicket({
   ticket,
   textoBruto,
-  autorId,
   onPublicado,
 }: {
   ticket: TicketSerializado;
   textoBruto: string;
-  autorId: string;
   onPublicado: (id: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -143,7 +141,6 @@ function PainelTicket({
     startTransition(async () => {
       setErro(null);
       const fd = new FormData();
-      fd.set("autorId", autorId);
       fd.set("textoBruto", textoBruto);
       fd.set("ticket", JSON.stringify(ticket));
       const res = await publicarOportunidade(fd);
@@ -330,11 +327,7 @@ function Chip({ children }: { children: React.ReactNode }) {
 // Componente principal exportado
 // ──────────────────────────────────────────────
 
-export default function NovaOportunidadeCliente({
-  autorId,
-}: {
-  autorId: string;
-}) {
+export default function NovaOportunidadeCliente() {
   const [textoBruto, setTextoBruto] = useState("");
   const [ticket, setTicket] = useState<TicketSerializado | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -348,7 +341,6 @@ export default function NovaOportunidadeCliente({
       setTicket(null);
       const fd = new FormData();
       fd.set("textoBruto", textoBruto);
-      fd.set("autorId", autorId);
       const res = await extrairTicket(fd);
       if (res.ok) {
         setTicket(res.dados);
@@ -492,7 +484,6 @@ export default function NovaOportunidadeCliente({
           <PainelTicket
             ticket={ticket}
             textoBruto={textoBruto}
-            autorId={autorId}
             onPublicado={setPublicadoId}
           />
         </div>

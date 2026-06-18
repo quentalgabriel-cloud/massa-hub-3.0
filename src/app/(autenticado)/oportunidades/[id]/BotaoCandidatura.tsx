@@ -5,10 +5,8 @@ import { candidatar } from "./actions";
 
 export default function BotaoCandidatura({
   oportunidadeId,
-  perfilId = "perfil-dev",
 }: {
   oportunidadeId: string;
-  perfilId?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [estado, setEstado] = useState<"idle" | "ok" | "erro">("idle");
@@ -20,7 +18,6 @@ export default function BotaoCandidatura({
       setMensagemErro(null);
       const fd = new FormData();
       fd.set("oportunidadeId", oportunidadeId);
-      fd.set("perfilId", perfilId);
       const res = await candidatar(fd);
       if (res.ok) {
         setEstado("ok");

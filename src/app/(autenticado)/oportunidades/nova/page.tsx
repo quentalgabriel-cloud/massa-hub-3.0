@@ -6,9 +6,8 @@ export const metadata: Metadata = {
 };
 
 // Server Component: wrapper estatico. A logica interativa fica no Client Component.
-// autorId fixo em desenvolvimento — sera substituido pela sessao Supabase Auth
-// quando a autenticacao for integrada.
-const AUTOR_ID_DEV = "assessor-dev";
+// O autor da oportunidade e derivado da sessao Supabase Auth dentro da Server
+// Action (Ciclo 5) — o cliente nao envia mais nenhum id.
 
 export default function NovaOportunidadePage() {
   return (
@@ -35,7 +34,7 @@ export default function NovaOportunidadePage() {
 
       {/* Area principal */}
       <div className="max-w-5xl mx-auto">
-        <NovaOportunidadeCliente autorId={AUTOR_ID_DEV} />
+        <NovaOportunidadeCliente />
       </div>
     </main>
   );

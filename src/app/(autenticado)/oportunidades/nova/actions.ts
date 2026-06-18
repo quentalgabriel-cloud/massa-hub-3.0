@@ -5,6 +5,7 @@ import { ExtrairTicket } from "@aplicacao/ExtrairTicket";
 import { PublicarOportunidade } from "@aplicacao/PublicarOportunidade";
 import { ExtratorDeTicketAnthropic } from "@infra/anthropic/ExtratorDeTicketAnthropic";
 import { TicketExtraido } from "@dominio/oportunidade/TicketExtraido";
+import { usuarioAtual } from "@infra/supabase/auth";
 
 // Tipo serializado do TicketExtraido para atravessar a fronteira Server→Client.
 // Datas viram string ISO; Papel mantem apenas campos primitivos.
@@ -50,15 +51,17 @@ type Resultado<T> = { ok: true; dados: T } | { ok: false; erro: string };
 
 const schemaExtrair = z.object({
   textoBruto: z.string().min(10, "Briefing muito curto."),
-  autorId: z.string().min(1),
 });
 
 export async function extrairTicket(
   formData: FormData,
 ): Promise<Resultado<TicketSerializado>> {
+  // Identidade vem da sessao, nunca do cliente (Ciclo 5).
+  const usuario = await usuarioAtual();
+  if (!usuario) return { ok: false, erro: "Sessao expirada. Entre novamente." };
+
   const parsed = schemaExtrair.safeParse({
     textoBruto: formData.get("textoBruto"),
-    autorId: formData.get("autorId"),
   });
   if (!parsed.success) {
     return { ok: false, erro: parsed.error.errors[0].message };
@@ -67,7 +70,10 @@ export async function extrairTicket(
   try {
     const extrator = new ExtratorDeTicketAnthropic();
     const caso = new ExtrairTicket(extrator);
-    const ticket = await caso.executar(parsed.data);
+    const ticket = await caso.executar({
+      textoBruto: parsed.data.textoBruto,
+      autorId: usuario.id,
+    });
     return { ok: true, dados: serializarTicket(ticket) };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro desconhecido.";
@@ -76,7 +82,6 @@ export async function extrairTicket(
 }
 
 const schemaPublicar = z.object({
-  autorId: z.string().min(1),
   textoBruto: z.string().min(1),
   ticket: z.string().min(1), // JSON serializado do TicketSerializado
 });
@@ -84,8 +89,11 @@ const schemaPublicar = z.object({
 export async function publicarOportunidade(
   formData: FormData,
 ): Promise<Resultado<{ id: string }>> {
+  // Autor = usuario autenticado (sessao), nunca um id vindo do cliente (Ciclo 5).
+  const usuario = await usuarioAtual();
+  if (!usuario) return { ok: false, erro: "Sessao expirada. Entre novamente." };
+
   const parsed = schemaPublicar.safeParse({
-    autorId: formData.get("autorId"),
     textoBruto: formData.get("textoBruto"),
     ticket: formData.get("ticket"),
   });
@@ -145,7 +153,7 @@ export async function publicarOportunidade(
 
     await caso.executar({
       id,
-      autorId: parsed.data.autorId,
+      autorId: usuario.id,
       ticket,
       textoBruto: parsed.data.textoBruto,
       revisadoPeloAutor: true,
