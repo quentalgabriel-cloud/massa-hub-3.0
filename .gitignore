@@ -28,3 +28,4 @@ watch-*/
 # SO / editor
 .DS_Store
 *.log
+.vercel
