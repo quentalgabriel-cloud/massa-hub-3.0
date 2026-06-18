@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { criarClienteSSR } from "@infra/supabase/cliente";
 import NovaOportunidadeCliente from "./NovaOportunidadeCliente";
 
 export const metadata: Metadata = {
   title: "Nova oportunidade — Massa Hub",
 };
 
-// Server Component: wrapper estatico. A logica interativa fica no Client Component.
-// autorId fixo em desenvolvimento — sera substituido pela sessao Supabase Auth
-// quando a autenticacao for integrada.
-const AUTOR_ID_DEV = "assessor-dev";
-
-export default function NovaOportunidadePage() {
+// Server Component: wrapper. A logica interativa fica no Client Component.
+// O autorId vem da sessao Supabase (o guard do layout ja garante usuario).
+export default async function NovaOportunidadePage() {
+  const supabase = await criarClienteSSR();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
   return (
     <main
       className="min-h-screen px-4 py-10"
@@ -35,7 +39,7 @@ export default function NovaOportunidadePage() {
 
       {/* Area principal */}
       <div className="max-w-5xl mx-auto">
-        <NovaOportunidadeCliente autorId={AUTOR_ID_DEV} />
+        <NovaOportunidadeCliente autorId={user.id} />
       </div>
     </main>
   );
