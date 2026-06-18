@@ -111,6 +111,70 @@ fechada antes de PROMPT 5 (a primeira tela de alta fidelidade).
 
 ---
 
+## 4.1. Destilação — primeira rodada (junho/2026)
+
+> Origem: estudo de direção criativa `massahubdirecaocriativa.html` (Gabriel + diretor criativo).
+> Esta é a ETAPA 2 (destilação) do método acima, com as decisões já triadas em
+> ADOTADO (vale agora) vs. EM PROVA (validar na Screen 10 antes de virar token).
+
+### ADOTADO agora — ideia organizadora (zero conflito com a constituição)
+
+**A marca vive na tensão Lastro × Ritmo. "Um registro que pulsa."**
+- **Lastro = peso** — prova, registro, evidência verificável, credibilidade (o lado rigor).
+- **Ritmo = pulso** — cadência, calor, cultura, movimento ao longo do tempo (o lado vivo).
+- Toda decisão visual equilibra as duas forças. Sóbrio demais → vira FOAM (frio).
+  Quente demais → vira YOUPIX (barulho). A interseção é o território de ninguém.
+
+Esta é uma **máquina de decisão**, não slogan: na dúvida "mais sóbrio ou mais quente?",
+a resposta é "os dois, em proporção". É a régua prática da identidade.
+
+**O que é genuinamente nosso (o fosso real, não a cor):**
+1. A **monoespaçada como assinatura de dado** — vocabulário GitHub que nenhum
+   concorrente da creator economy usa.
+2. O **léxico proprietário** — Lastro, Ritmo, Prova, Squad (já em CLAUDE.md/AGENTS.md).
+3. A **ideia do registro que pulsa** — a tensão das duas palavras.
+Essas três viajam juntas e formam o sistema reconhecível. Cor e fonte são acabamento.
+
+### ADOTADO agora — princípios de design (6 regras generativas)
+
+1. **Evidência sobre afirmação** — mostrar o fato verificável, nunca declarar nota.
+   (reforça D1: proibido score. Já constitucional.)
+2. **O trabalho é o herói, não o rosto** — protagonista é o artefato (Prova, ticket,
+   Ritmo), não foto de creator sorrindo. Anti-vitrine, alinha com CLAUDE.md seção 2.
+3. **Densidade com respiro** — densidade de ferramenta séria (GitHub) + espaçamento
+   quente que evita frieza de planilha.
+4. **Mono é a assinatura** — a mono nos dados é o recurso visual mais ownable da
+   categoria. Fio condutor: contadores, valores, handles, rótulos, metadados.
+5. **Calor sem barulho** — cor e personalidade sim, neon não. O dado precisa respirar.
+6. **Movimento que prova, não que enfeita** — animação demonstra a tese (ticket se
+   estruturando, Ritmo preenchendo). Nunca decorativa. (alinha com entregável 2.)
+
+### EM PROVA — validar na Screen 10 antes de virar token oficial (spec 04 intacto até lá)
+
+Estas mudanças vêm do estudo mas **reescreveriam decisões constitucionais / o spec 04**.
+Por isso NÃO são oficiais ainda — viram hipótese a testar na primeira tela real:
+
+- **Ritmo em âmbar vs. violeta.** O estudo propõe o heatmap em âmbar ("verde é do
+  GitHub, azul é de todo mundo, âmbar é nosso"). MAS o CLAUDE.md seção 3 e o spec 04
+  cravam **escala violeta**. Reserva real: âmbar (#FF5A2D) lê como alerta/erro na
+  maioria das interfaces — um "muro de consistência" inteiro em laranja-vermelho pode
+  comunicar "muita coisa errada" antes de "trabalho consistente". O verde do GitHub
+  funciona porque verde = positivo universal. **Decisão: construir a Screen 10 com as
+  duas versões e comparar com dado real.** Até lá, violeta permanece oficial.
+- **Violeta mais profundo:** `#6C5BFF` → `#5A43F0` (proposto). Cosmético, reversível.
+- **Paper mais quente:** `#FAFAF6` → `#FAF7F0` (proposto).
+- **Âmbar promovido a co-protagonista** com **regra de proporção**: violeta e âmbar
+  nunca em força igual na mesma tela — um lidera, o outro pontua. Telas de dado/prova →
+  violeta lidera. Telas de pessoa/comunidade/celebração → âmbar lidera. (Hoje o spec 04
+  diz ember "com parcimônia" — esta é uma emenda a provar.)
+
+**Por que estacionar e não cravar:** cravar cor antes da primeira tela real é o
+Anti-Padrão #1 (expandir a tese antes de executar) vestido de rigor de marca. O próprio
+estudo avisa: "não transforme isto numa bíblia de marca antes de ter produto na mão".
+A régua de qualidade (seção 5) decide na prova visual, não no HTML.
+
+---
+
 ## 5. Régua de qualidade (como saber que está bom)
 
 Antes de fechar o sprint, cada entregável passa por:
