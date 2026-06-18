@@ -118,10 +118,10 @@ function montarTicket(resposta: RespostaIA, textoBruto: string): TicketExtraido 
   const papeis = resposta.papeis.map((p) => {
     const faixa =
       p.seguidoresMin !== null
-        ? FaixaSeguidores.criar({
-            min: p.seguidoresMin,
-            max: p.seguidoresMax ?? undefined,
-          })
+        ? FaixaSeguidores.criar(
+            p.seguidoresMin,
+            p.seguidoresMax ?? undefined,
+          )
         : undefined;
     return Papel.criar({
       funcao: p.funcao,
