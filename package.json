@@ -14,6 +14,7 @@
     "context": "repomix --compress --style xml --ignore 'node_modules,.next,watch-*,.claude/skills' -o /tmp/massa-context.xml"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "next": "15.5.19",
     "react": "19.1.1",
     "react-dom": "19.1.1",
