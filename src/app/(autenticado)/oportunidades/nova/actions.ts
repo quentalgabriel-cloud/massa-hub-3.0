@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ExtrairTicket } from "@aplicacao/ExtrairTicket";
 import { PublicarOportunidade } from "@aplicacao/PublicarOportunidade";
 import { ExtratorDeTicketAnthropic } from "@infra/anthropic/ExtratorDeTicketAnthropic";
+import { criarClienteSSR } from "@infra/supabase/cliente";
 import { TicketExtraido } from "@dominio/oportunidade/TicketExtraido";
 
 // Tipo serializado do TicketExtraido para atravessar a fronteira Server→Client.
@@ -76,7 +77,6 @@ export async function extrairTicket(
 }
 
 const schemaPublicar = z.object({
-  autorId: z.string().min(1),
   textoBruto: z.string().min(1),
   ticket: z.string().min(1), // JSON serializado do TicketSerializado
 });
@@ -84,8 +84,14 @@ const schemaPublicar = z.object({
 export async function publicarOportunidade(
   formData: FormData,
 ): Promise<Resultado<{ id: string }>> {
+  // Identidade vem da SESSAO (servidor), nunca do FormData — nao confiar no cliente.
+  const supabase = await criarClienteSSR();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, erro: "Sessao expirada. Entre novamente." };
+
   const parsed = schemaPublicar.safeParse({
-    autorId: formData.get("autorId"),
     textoBruto: formData.get("textoBruto"),
     ticket: formData.get("ticket"),
   });
@@ -145,7 +151,7 @@ export async function publicarOportunidade(
 
     await caso.executar({
       id,
-      autorId: parsed.data.autorId,
+      autorId: user.id,
       ticket,
       textoBruto: parsed.data.textoBruto,
       revisadoPeloAutor: true,
