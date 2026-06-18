@@ -67,10 +67,10 @@ export function FiltrosOportunidades({ nichoAtivo, regiaoAtiva }: Props) {
             <button
               key={nicho}
               onClick={() => alternarNicho(nicho)}
-              className="px-3 py-1 text-xs font-medium rounded-[8px] transition-colors"
+              className="px-3 text-xs font-medium rounded-[8px] transition-colors"
               style={{
                 fontFamily: "var(--font-mono)",
-                minHeight: "32px",
+                minHeight: "44px",
                 background: ativo
                   ? "var(--color-violet)"
                   : "var(--color-violet-soft)",

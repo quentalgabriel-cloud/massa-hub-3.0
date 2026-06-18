@@ -109,13 +109,18 @@ ALTER TABLE oportunidades ENABLE ROW LEVEL SECURITY;
 -- Políticas: oportunidades
 -- -----------------------------------------------------------------------------
 
+-- DROP antes de CREATE: Postgres não aceita IF NOT EXISTS em CREATE POLICY,
+-- então removemos antes para tornar a migration re-executável sem erro.
+
 -- Leitura pública para oportunidades abertas (sem autenticação necessária)
+DROP POLICY IF EXISTS "oportunidades abertas sao publicas" ON oportunidades;
 CREATE POLICY "oportunidades abertas sao publicas"
   ON oportunidades FOR SELECT
   USING (status = 'aberta');
 
 -- Placeholder de escrita autenticada — será substituído por política real
 -- que valida auth.uid() = autor_id quando o auth estiver integrado.
+DROP POLICY IF EXISTS "autor pode inserir e atualizar" ON oportunidades;
 CREATE POLICY "autor pode inserir e atualizar"
   ON oportunidades FOR ALL
   USING (true) WITH CHECK (true);
