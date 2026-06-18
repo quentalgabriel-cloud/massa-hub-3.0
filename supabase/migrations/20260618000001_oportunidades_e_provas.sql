@@ -19,17 +19,23 @@ END $$;
 -- TABELA: provas
 -- Unidade atômica do Lastro. Registro de trabalho real, assinado pelos dois lados.
 -- =============================================================================
+-- NOTA: este bloco foi reconciliado para refletir o schema REAL em producao
+-- (criado no Ciclo 1) e o que o adapter ProvaRepositorioSupabase espera:
+-- id e TEXT (id de dominio, nao UUID) e data e TIMESTAMPTZ. Num banco novo,
+-- a versao antiga (UUID/DATE) quebraria o adapter de Prova.
 CREATE TABLE IF NOT EXISTS provas (
-  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  tipo              TEXT        NOT NULL,                     -- TipoProva enum (ex: 'campanha', 'conteudo', 'consultoria')
+  id                TEXT        PRIMARY KEY,                  -- id de dominio (string) — ver Prova.ts
+  tipo              TEXT        NOT NULL
+                    CHECK (tipo IN ('campanha','consultoria','festival','negociacao','outro')),
   titulo            TEXT        NOT NULL,
   descricao         TEXT        NOT NULL,
-  resultado         TEXT,                                     -- nullable — nem toda prova tem resultado mensurável
+  resultado         TEXT,                                     -- nullable — nem toda prova tem resultado mensuravel
   criador_id        TEXT        NOT NULL,                     -- perfilId de quem realizou o trabalho
   contratante_id    TEXT        NOT NULL,                     -- perfilId de quem contratou
-  participantes     TEXT[]      NOT NULL DEFAULT '{}',        -- outros perfis envolvidos
-  data              DATE        NOT NULL,                     -- data de realização/entrega
-  criado_em         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  participantes     TEXT[]      NOT NULL DEFAULT '{}',        -- outros perfis envolvidos (grafo)
+  data              TIMESTAMPTZ NOT NULL,                     -- data de realizacao/entrega
+  criado_em         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT provas_partes_distintas CHECK (criador_id <> contratante_id)
 );
 
 -- -----------------------------------------------------------------------------
@@ -37,12 +43,15 @@ CREATE TABLE IF NOT EXISTS provas (
 -- Registro bilateral que valida a prova. Sem as duas assinaturas, a prova não
 -- tem Lastro completo. ON DELETE CASCADE garante limpeza ao remover uma prova.
 -- -----------------------------------------------------------------------------
+-- Reconciliado: prova_id e TEXT (FK para provas.id TEXT) e ha um id UUID proprio,
+-- com unicidade por (prova_id, autor_id) — espelha o schema em producao e o adapter.
 CREATE TABLE IF NOT EXISTS assinaturas (
-  prova_id          UUID        NOT NULL REFERENCES provas(id) ON DELETE CASCADE,
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  prova_id          TEXT        NOT NULL REFERENCES provas(id) ON DELETE CASCADE,
   autor_id          TEXT        NOT NULL,                     -- perfilId de quem assinou
   papel             TEXT        NOT NULL CHECK (papel IN ('criador', 'contratante')),
-  assinado_em       TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (prova_id, autor_id)
+  assinado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT assinaturas_unicas_por_autor UNIQUE (prova_id, autor_id)
 );
 
 
@@ -106,21 +115,13 @@ ALTER TABLE assinaturas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE oportunidades ENABLE ROW LEVEL SECURITY;
 
 -- -----------------------------------------------------------------------------
--- Políticas: oportunidades
+-- Politicas: deny-by-default ate o auth real (Ciclo 5)
 -- -----------------------------------------------------------------------------
-
--- DROP antes de CREATE: Postgres não aceita IF NOT EXISTS em CREATE POLICY,
--- então removemos antes para tornar a migration re-executável sem erro.
-
--- Leitura pública para oportunidades abertas (sem autenticação necessária)
-DROP POLICY IF EXISTS "oportunidades abertas sao publicas" ON oportunidades;
-CREATE POLICY "oportunidades abertas sao publicas"
-  ON oportunidades FOR SELECT
-  USING (status = 'aberta');
-
--- Placeholder de escrita autenticada — será substituído por política real
--- que valida auth.uid() = autor_id quando o auth estiver integrado.
-DROP POLICY IF EXISTS "autor pode inserir e atualizar" ON oportunidades;
-CREATE POLICY "autor pode inserir e atualizar"
-  ON oportunidades FOR ALL
-  USING (true) WITH CHECK (true);
+-- RLS habilitado SEM politicas publicas. Todo acesso da aplicacao e server-side
+-- via service role (criarClienteServidor), que bypassa RLS. NAO criar politica
+-- de escrita aberta (FOR ALL USING(true) WITH CHECK(true)): com a anon key, que
+-- e publica, isso permitiria qualquer um inserir/atualizar/apagar oportunidades
+-- via PostgREST. As politicas reais (auth.uid() = autor_id para escrita; leitura
+-- publica de status='aberta') entram no Ciclo 5, junto com o Supabase Auth.
+-- (A migration 20260618000002_rls_hardening remove as politicas abertas que a
+-- versao anterior deste arquivo havia aplicado no banco de producao.)
