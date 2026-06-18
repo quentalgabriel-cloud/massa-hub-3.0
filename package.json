@@ -1,0 +1,31 @@
+{
+  "name": "massa-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A rede profissional da Creator Economy brasileira — modulo de oportunidades (Fase 1).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:dominio": "vitest run tests/domain",
+    "context": "repomix --compress --style xml --ignore 'node_modules,.next,watch-*,.claude/skills' -o /tmp/massa-context.xml"
+  },
+  "dependencies": {
+    "next": "15.5.19",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.13",
+    "@types/node": "22.18.6",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.9.2",
+    "vitest": "3.2.6"
+  }
+}

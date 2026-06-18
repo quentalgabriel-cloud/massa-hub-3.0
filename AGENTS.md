@@ -235,27 +235,23 @@ git worktree add ../massa-adapter-anthropic -b feat/adapter-anthropic
 
 ---
 
-## 8. Design system (tokens mínimos para agentes de UI)
+## 8. Design system — FONTE ÚNICA de tokens
 
-```css
---paper:      #FAFAF6;
---card:       #FFFFFF;
---ink:        #16151D;
---ink2:       #5C5A66;
---line:       #E8E6DD;
---violet:     #6C5BFF;   /* marca */
---violet-deep:#2B1FA8;
---violet-soft:#EFEDFF;
---ember:      #FF5A2D;   /* uso parcimonioso */
---ok:         #117A53;
-```
+Não duplicar tokens aqui. Os valores oficiais vivem em **um só lugar**:
 
-Tipografia:
-- **Archivo 700-900** — títulos e display
-- **Inter** — corpo de texto
-- **IBM Plex Mono** — handles, números, labels de dados, badges
+- **Runtime (verdade para o código):** `src/app/globals.css` — bloco `@theme` do Tailwind v4.
+  Consome-se via classes (`bg-paper`, `text-ink`, `text-violet-deep`) ou `var(--color-*)`.
+- **Doc (o porquê):** `docs/specs/04-design-system.md` — racional e regras de uso.
+- **Direção/pesquisa:** `docs/specs/06-identidade-visual-pesquisa.md` — tese Lastro×Ritmo
+  e tokens EM PROVA (violeta mais profundo, âmbar co-protagonista, Ritmo em âmbar) que só
+  viram oficiais após a Screen 10.
 
-Raio: 8-12px. Sem sombras. Bordas 1px em `--line`.
+Se precisar mudar um token, muda no `globals.css` e atualiza o spec 04 — nunca em dois lugares.
+
+Resumo (consultar `globals.css` para os hex): paper off-white quente, tinta quase-preta,
+violeta de marca, âmbar parcimonioso. Tipografia: **Archivo 700-900** (display),
+**Inter** (corpo), **IBM Plex Mono** (dados/handles/labels). Raio 8-12px, sem sombras,
+bordas 1px em `--color-line`.
 
 ---
 

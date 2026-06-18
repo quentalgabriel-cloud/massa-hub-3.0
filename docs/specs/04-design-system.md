@@ -2,6 +2,12 @@
 
 Status: derivado dos protótipos aprovados. Use como base visual.
 
+> **Fonte única de tokens:** os valores oficiais vivem no runtime em `src/app/globals.css`
+> (bloco `@theme` do Tailwind v4). Este spec é a documentação (o porquê); o `globals.css`
+> é a verdade para o código. Mudou um token? Muda nos dois, nunca só num. Propostas ainda
+> não oficiais (violeta mais profundo, âmbar co-protagonista, Ritmo em âmbar) estão EM PROVA
+> em `06-identidade-visual-pesquisa.md` §4.1 — só entram aqui após a Screen 10.
+
 A estética é **editorial-criativa com vocabulário de ferramenta de dev** — não SaaS
 genérico arredondado. Paper off-white, tinta quase-preta, violeta de marca, dados
 em mono. Tipografia dura.

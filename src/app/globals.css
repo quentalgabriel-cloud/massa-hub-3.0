@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+  FONTE UNICA DE TOKENS — Massa Hub
+  ----------------------------------
+  Os valores oficiais do design system vivem AQUI (runtime) e em docs/specs/04-design-system.md (doc).
+  NAO duplicar tokens em outro lugar. AGENTS.md secao 8 aponta para este arquivo.
+
+  Estetica: editorial-criativa com vocabulario de ferramenta de dev.
+  Paper off-white quente, tinta quase-preta, violeta de marca, dados em mono.
+
+  Os tokens cromaticos abaixo sao os APROVADOS (spec 04). As propostas do estudo de
+  direcao criativa (violeta #5A43F0, paper #FAF7F0, ambar co-protagonista, Ritmo em
+  ambar) estao EM PROVA — ver docs/specs/06-identidade-visual-pesquisa.md secao 4.1.
+  So viram token oficial aqui depois da prova visual na Screen 10.
+*/
+
+@theme {
+  /* Superficie */
+  --color-paper: #fafaf6;
+  --color-card: #ffffff;
+
+  /* Tinta */
+  --color-ink: #16151d;
+  --color-ink2: #5c5a66;
+  --color-ink3: #74727d;
+  --color-line: #e8e6dd;
+
+  /* Marca */
+  --color-violet: #6c5bff;
+  --color-violet-deep: #2b1fa8;
+  --color-violet-soft: #efedff;
+
+  /* Acentos */
+  --color-ember: #ff5a2d; /* destaque quente, uso parcimonioso (spec 04) */
+  --color-ok: #117a53;
+
+  /* Escala do heatmap Ritmo (violeta — oficial; ambar em prova, ver spec 06) */
+  --color-ritmo-0: #f0efe8;
+  --color-ritmo-1: #dcd8fb;
+  --color-ritmo-2: #a99cff;
+  --color-ritmo-3: #6c5bff;
+  --color-ritmo-4: #2b1fa8;
+
+  /* Tipografia */
+  --font-display: "Archivo", system-ui, sans-serif; /* titulos, pesos 700-900, comprimido */
+  --font-body: "Inter", system-ui, sans-serif; /* corpo */
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace; /* dados, numeros, handles */
+
+  /* Forma — raio contido, sem pilulas */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+
+::selection {
+  background: var(--color-violet);
+  color: #fff;
+}
