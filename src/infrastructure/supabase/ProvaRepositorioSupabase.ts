@@ -127,6 +127,38 @@ export class ProvaRepositorioSupabase implements ProvaRepositorio {
     return linhas.map((p) => this.reconstruir(p, porProva.get(p.id) ?? []));
   }
 
+  async listarPorParte(perfilId: string): Promise<Prova[]> {
+    // Busca todas as provas onde perfilId é criador OU contratante.
+    const { data: provas, error } = await this.cliente
+      .from("provas")
+      .select(COLUNAS_PROVA)
+      .or(`criador_id.eq.${perfilId},contratante_id.eq.${perfilId}`)
+      .limit(50);
+    if (error) throw new Error(`Erro ao listar provas: ${error.message}`);
+    if (!provas || provas.length === 0) return [];
+
+    const linhas = provas as ProvaRow[];
+    const ids = linhas.map((p) => p.id);
+
+    const { data: assinaturas, error: erroAss } = await this.cliente
+      .from("assinaturas")
+      .select(COLUNAS_ASSINATURA)
+      .in("prova_id", ids)
+      .limit(1000);
+    if (erroAss) {
+      throw new Error(`Erro ao listar assinaturas: ${erroAss.message}`);
+    }
+
+    const porProva = new Map<string, AssinaturaRow[]>();
+    for (const a of (assinaturas ?? []) as AssinaturaRow[]) {
+      const lista = porProva.get(a.prova_id) ?? [];
+      lista.push(a);
+      porProva.set(a.prova_id, lista);
+    }
+
+    return linhas.map((p) => this.reconstruir(p, porProva.get(p.id) ?? []));
+  }
+
   private reconstruir(prova: ProvaRow, assinaturas: AssinaturaRow[]): Prova {
     const dados: DadosProva = {
       id: prova.id,
