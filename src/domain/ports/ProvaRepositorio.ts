@@ -8,4 +8,7 @@ export interface ProvaRepositorio {
   buscarPorId(id: string): Promise<Prova | null>;
   salvar(prova: Prova): Promise<void>;
   listarPorCriador(criadorId: string): Promise<Prova[]>;
+  // Provas em que o perfil e parte (criador OU contratante) — base para listar
+  // pendencias de assinatura e, depois, o lastro da pessoa.
+  listarPorParte(perfilId: string): Promise<Prova[]>;
 }
