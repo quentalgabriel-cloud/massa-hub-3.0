@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dominio": "vitest run tests/domain",
+    "eval:ticket": "tsx eval/ticket/run.ts",
     "context": "repomix --compress --style xml --ignore 'node_modules,.next,watch-*,.claude/skills' -o /tmp/massa-context.xml"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
     "tailwindcss": "4.1.13",
+    "tsx": "^4.20.6",
     "typescript": "5.9.2",
     "vitest": "3.2.6"
   }

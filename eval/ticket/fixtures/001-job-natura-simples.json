@@ -1,0 +1,20 @@
+{
+  "id": "001-job-natura-simples",
+  "descricao": "Briefing rico — caso feliz. Exemplo literal de docs/specs/02-modulo-oportunidades.md.",
+  "textoBruto": "Oi! Tô com um job da Natura pra setembro, campanha de skincare, preciso de uns 5 creators do NE, 50k–300k, budget 25 mil, 1 reels + 3 stories + evento em Recife dia 12/09.",
+  "esperado": {
+    "marca": "Natura",
+    "budget": 25000,
+    "local": "Recife",
+    "regiao": "Nordeste",
+    "entregaveis": ["1 reels", "3 stories"],
+    "papeis": [
+      {
+        "qtdMinima": 5,
+        "seguidoresMinEsperado": 50000,
+        "seguidoresMaxEsperado": 300000
+      }
+    ],
+    "confiancaMinima": 0.7
+  }
+}

@@ -43,6 +43,36 @@ autônomos. Pipeline você controla e testa; enxame você reza pra funcionar.
 
 Quando reavaliar: fase 2+, com volume real de oportunidades circulando.
 
+### Reabertura consciente de D10 (2026-06-21)
+
+A pedido do fundador, em 2026-06-21, D10 foi revisitada conscientemente — não por
+desvio silencioso, mas por pedido explícito de estudar loop engineering e avaliar
+loop/multi-agente como possível direção de produto/infra. Isto fica registrado para
+distinguir uma reabertura deliberada de uma violação por engano.
+
+Status: **D10 permanece válida e em vigor agora.** Esta nota não a substitui nem
+suspende.
+
+O que muda / o que não muda: nenhum código ou escopo construído muda. O que passa a
+existir é um documento de referência (`docs/estudos/loop-engineering.md`) com critérios
+objetivos de quando reavaliar, em vez de "nunca mais falar disso" ou um "depois"
+indefinido.
+
+Critérios objetivos de reavaliação (detalhados na seção 7 do estudo):
+- Volume de oportunidades/mês processadas pelo agente único, suficiente para o gargalo
+  visível deixar de ser throughput de cadastro e passar a ser precisão/cobertura.
+- Existência de funcionalidades de produto que dão o que orquestrar (matching por
+  Lastro, verificação cruzada, negociação) — hoje nenhuma delas existe.
+- Dataset de eval (`eval/ticket/`) mostrando platô de qualidade do agente único — só
+  então "adicionar uma segunda cabeça" tem ROI mensurável em vez de ser estética de
+  arquitetura.
+
+Isto é uma discussão aberta com critério de reabertura, não uma decisão de construir
+multi-agente. Se uma sessão futura citar esta nota para justificar construção direta
+sem checar os critérios acima, é o anti-padrão #1 de novo.
+
+Ver `docs/estudos/loop-engineering.md` para o estudo completo.
+
 ## D11 — Repo, Supabase e Vercel novos e isolados
 
 Decisão: começar do zero, projetos novos. Supabase entra como adapter de repositório,

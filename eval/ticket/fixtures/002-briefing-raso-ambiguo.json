@@ -1,0 +1,12 @@
+{
+  "id": "002-briefing-raso-ambiguo",
+  "descricao": "Briefing raso e ambíguo — testa que confianca cai e que papeis nunca fica vazio (regra de domínio em Papel/validarResposta do adapter).",
+  "textoBruto": "preciso de um creator pra um job, ainda vou fechar os detalhes",
+  "esperado": {
+    "marca": null,
+    "budget": null,
+    "entregaveis": [],
+    "papeisMinimo": 1,
+    "confiancaMaxima": 0.4
+  }
+}

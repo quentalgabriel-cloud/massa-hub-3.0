@@ -140,6 +140,11 @@ em 360/390px antes de considerar pronto.
 
 ## PROMPT recorrente — Freio de escopo (use quando bater a vontade de expandir)
 
+> Desde 2026-06-21 existe a skill `/freio-de-escopo` (`.claude/skills/freio-de-escopo/`)
+> que faz exatamente isto, com auto-invocação quando o Claude Code detectar deriva —
+> não depende de você lembrar de colar o prompt. Use `/freio-de-escopo` ou deixe o
+> Claude Code disparar sozinho. O texto abaixo continua valendo como fallback manual.
+
 ```
 Antes de fazer isto, cruze com a régua da seção 7 do CLAUDE.md e com a lista de
 quarentena. Isto é trilho da Fase 1 ou é expansão de tese? Se for expansão, me
@@ -149,6 +154,11 @@ diga qual regra cruza e por que eu deveria parar — não execute só porque ped
 ---
 
 ## PROMPT recorrente — Fim de sessão
+
+> Desde 2026-06-21 existe a skill `/fim-de-sessao` (`.claude/skills/fim-de-sessao/`)
+> que preenche o resumo de sessão (inclusive o arquivo que o hook `session-end.sh`
+> cria como casca vazia em sessão remota) e cuida do commit. O texto abaixo continua
+> valendo como fallback manual.
 
 ```
 Resuma o que mudou nesta sessão em 5 linhas. Se alguma implementação alterou uma
