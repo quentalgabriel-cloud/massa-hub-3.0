@@ -89,6 +89,45 @@ function avaliar(fixture: Fixture, ticket: TicketExtraido): Divergencia[] {
     divergencias.push({ campo: "papeis", esperado: "nunca vazio (regra de dominio)", obtido: [] });
   }
 
+  // Quando a fixture declara expectativas por papel, compara campo a campo com o
+  // papel na mesma posicao. Ausencia de um campo no gabarito = nao verifica aquele
+  // campo (gabarito parcial e valido). So checa os papeis que o gabarito descreve.
+  esperado.papeis?.forEach((papelEsperado, i) => {
+    const papelObtido = ticket.papeis[i];
+    if (!papelObtido) return; // ja sinalizado por papeis.length acima
+
+    if (
+      papelEsperado.qtdMinima !== undefined &&
+      papelObtido.qtd < papelEsperado.qtdMinima
+    ) {
+      divergencias.push({
+        campo: `papeis[${i}].qtd`,
+        esperado: `>= ${papelEsperado.qtdMinima}`,
+        obtido: papelObtido.qtd,
+      });
+    }
+
+    const faixa = papelObtido.faixaSeguidores;
+    if (papelEsperado.seguidoresMinEsperado !== undefined) {
+      if (faixa?.min !== papelEsperado.seguidoresMinEsperado) {
+        divergencias.push({
+          campo: `papeis[${i}].seguidoresMin`,
+          esperado: papelEsperado.seguidoresMinEsperado,
+          obtido: faixa?.min ?? null,
+        });
+      }
+    }
+    if (papelEsperado.seguidoresMaxEsperado !== undefined) {
+      if (faixa?.max !== papelEsperado.seguidoresMaxEsperado) {
+        divergencias.push({
+          campo: `papeis[${i}].seguidoresMax`,
+          esperado: papelEsperado.seguidoresMaxEsperado,
+          obtido: faixa?.max ?? null,
+        });
+      }
+    }
+  });
+
   if (esperado.confiancaMinima !== undefined && ticket.confianca < esperado.confiancaMinima) {
     divergencias.push({ campo: "confianca", esperado: `>= ${esperado.confiancaMinima}`, obtido: ticket.confianca });
   }

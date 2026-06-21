@@ -1,7 +1,7 @@
 ---
 name: freio-de-escopo
 description: Use SEMPRE que um pedido propuser construir, planejar ou expandir algo que pode estar fora do trilho da Fase 1 da Massa Hub (módulo de oportunidades) ou tocar áreas em quarentena listadas no CLAUDE.md — Identity OS, mapeamento em massa de creators, camada social/feed, curadoria educacional, ou QUALQUER sistema multi-agente (orchestrator, agentes autônomos em paralelo, agentes que reescrevem seus próprios prompts em produção). Também invocável manualmente como /freio-de-escopo a qualquer momento que o usuário queira essa checagem explícita antes de seguir.
-allowed-tools: Read
+allowed-tools: Read, Bash(sed:*)
 ---
 
 ## CLAUDE.md — seções 4 a 7
