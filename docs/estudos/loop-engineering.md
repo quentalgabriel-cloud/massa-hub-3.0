@@ -177,6 +177,64 @@ linha de produto validada.
 decisão de quando agir continua sendo D10 até ser formalmente substituída — e substituir
 D10 exige checar os três critérios acima com dado real, não com vontade.
 
+## 8. Achados dos vídeos assistidos (2026-06-21)
+
+Você pediu para eu assistir 6 vídeos sobre loop engineering e procurar saca escondida,
+não só repetir o que já está nas seções 1-7. Assisti 5 (Austin Marchese, Greg
+Isenberg/Ross Mike, um terceiro sobre harness/sinais, How I AI, e um quinto sobre o
+viral de Boris/Peter; o sexto bloqueou por detecção de bot do YouTube mesmo após
+retentativas). Três achados realmente mudam alguma coisa no raciocínio, o resto é
+reforço do que já está escrito acima:
+
+**1. Os dois nomes que estão "vendendo" loop (Boris Cherny da Anthropic, Peter
+Steinberger da OpenAI) têm orçamento de token estruturalmente diferente do seu.** Não é
+hipérbole: Peter Steinberger publicamente queimou **US$ 1,3 milhão em tokens em um único
+mês**, e ambos têm acesso interno irrestrito a modelo, segundo o próprio conteúdo. O
+crítico convidado no podcast do Greg Isenberg (Ross Mike) faz o ponto que falta na maior
+parte do hype: "se eu tivesse orçamento de token ilimitado, eu também estaria fazendo
+isso." Isso não é "tokens custam caro, cuidado" genérico — é que o conselho está vindo de
+gente cuja função de custo não existe para você. Reforça objetivamente o critério 1 da
+seção 7 (volume) e o tom geral da seção 6: o gargalo aqui nunca foi falta de arquitetura
+de IA, é orçamento real de fundador solo bootstrapado.
+
+**2. O loop mais concreto e funcional entre todos os exemplos mostrados é exatamente do
+formato que `eval/ticket/` já antecipa — e ele quebra de um jeito específico que vale
+documentar.** O exemplo do Ross Mike é um loop de code review (Cursor + Greptile):
+critério binário (nota 0-5), o agente itera até nota ≥ 4/5 ou 5 tentativas. Funciona
+porque o resultado é binário/quantificável — ele mesmo nomeia isso: "loops fazem sentido
+onde a saída é binária; quebram onde precisa de criatividade." Isso é exatamente o
+argumento de D1 (Lastro é fato contável, nunca nota) só que do lado da engenharia: nota
+funciona pra avaliar um adapter de software, nunca pra avaliar reputação de pessoa — os
+dois namespaces continuam certos por exigirem o mesmo tipo de saída (binária/contável), e
+o próprio eval do ticket é esse caso de uso, não um precedente para pontuar Lastro. Saca
+adicional não óbvia: mesmo nesse loop bem desenhado, ele relata que **quebra acima de
+~1000 linhas de código revisadas de uma vez** — ou seja, mesmo um loop funcional precisa
+de um teto explícito de tamanho/complexidade da unidade de trabalho, não só
+trigger+meta+verificação. Se algum dia o eval de ticket evoluir para rodar em lote, vale
+manter os fixtures pequenos e específicos por essa mesma razão.
+
+**3. O vídeo sobre harness (canal de produto, não citado pelo nome) descreve uma camada de
+memória compartilhada em markdown — "signals", "artifacts", "contract" por domínio, e um
+log de trabalho global — que é praticamente um espelho do que você já tem parcialmente
+montado, com uma peça faltando.** `docs/decisoes/log.md` já é o "contract" (timeline de
+decisões), `docs/sessoes/` já é o "work log" global. A peça que falta é o "signals": um
+lugar de fricção mínima para registrar uma observação/ideia/incômodo percebido durante uma
+sessão *antes* dele virar decisão formal ou spec — hoje isso só existe na sua memória ou
+se perde. A frase do vídeo que resume por que isso importa mesmo sem nenhum agente
+autônomo: "o agente esquece, o repositório não" (citando Addy Osmani) — e no seu caso
+isso é literal, não metáfora: sessões remotas rodam em containers efêmeros: se não foi
+commitado, não existe na próxima sessão. **Isto é uma recomendação, não uma implementação
+desta entrega** (mesma régua da seção 4): um `docs/sinais.md` simples — uma lista
+append-only de observações datadas, sem estrutura de pastas por domínio (você tem um
+produto, não times) — seria a versão mínima e de baixo custo dessa ideia, só se você
+achar que vale a fricção de mantê-lo. Não criei o arquivo; é uma sugestão pendente de ok
+seu, igual a `/inicio-de-sessao`.
+
+Resto do conteúdo dos vídeos (taxonomia de trigger: heartbeat/cron/hook/goal; loop vs.
+automação — automação executa passos fixos, loop decide se atingiu a meta; "harness" como
+tudo que não é o modelo; sub-agentes nunca verificando o próprio trabalho) já está coberto
+pelas seções 2-4 acima ou é geral demais para mudar alguma decisão da Massa Hub.
+
 ## Implementado nesta entrega (referência rápida)
 
 - `docs/decisoes/log.md` — subseção "Reabertura consciente de D10 (2026-06-21)".
