@@ -7,6 +7,32 @@ import { PublicarOportunidade } from "@aplicacao/PublicarOportunidade";
 import { ExtratorDeTicketAnthropic } from "@infra/anthropic/ExtratorDeTicketAnthropic";
 import { criarClienteSSR } from "@infra/supabase/cliente";
 import { TicketExtraido } from "@dominio/oportunidade/TicketExtraido";
+import type { User } from "@supabase/supabase-js";
+
+// Garante que o assessor logado tem um Perfil REAL (o no da rede) e devolve o
+// perfil.id. Fecha o fio solto da Fase 1: as acoes usavam user.id (id de auth)
+// no lugar do perfilId. Provisiona no primeiro uso, sem onboarding — o handle
+// sai do nome/e-mail do Google. Idempotente (get-or-create).
+async function garantirPerfilAssessorId(user: User): Promise<string> {
+  const { GarantirPerfilDoAssessor } = await import(
+    "@aplicacao/GarantirPerfilDoAssessor"
+  );
+  const { PerfilRepositorioSupabase } = await import(
+    "@infra/supabase/PerfilRepositorioSupabase"
+  );
+  const caso = new GarantirPerfilDoAssessor(new PerfilRepositorioSupabase());
+  const nome =
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.name as string | undefined) ??
+    "";
+  const perfil = await caso.executar({
+    usuarioId: user.id,
+    nome,
+    email: user.email ?? undefined,
+    perfilId: crypto.randomUUID(),
+  });
+  return perfil.id;
+}
 
 // Tipo serializado do TicketExtraido para atravessar a fronteira Server→Client.
 // Datas viram string ISO; Papel mantem apenas campos primitivos.
@@ -150,9 +176,13 @@ export async function publicarOportunidade(
     const repositorio = new OportunidadeRepositorioSupabase();
     const caso = new PublicarOportunidade(repositorio);
 
+    // O autor da oportunidade e o Perfil do assessor (o no da rede), nao o id
+    // de auth. Provisionado aqui se ainda nao existir.
+    const autorPerfilId = await garantirPerfilAssessorId(user);
+
     await caso.executar({
       id,
-      autorId: user.id,
+      autorId: autorPerfilId,
       ticket,
       textoBruto: parsed.data.textoBruto,
       revisadoPeloAutor: true,
@@ -219,9 +249,14 @@ export async function vincularCreator(
       new OportunidadeRepositorioSupabase(),
     );
 
+    // O assessor vincula com o id do SEU Perfil (o mesmo que autorId da
+    // oportunidade), nao o id de auth — senao o guard "so o autor vincula"
+    // (VincularCreatorAoSquad) rejeitaria.
+    const assessorPerfilId = await garantirPerfilAssessorId(user);
+
     const { perfil, criouPerfil } = await caso.executar({
       oportunidadeId: parsed.data.oportunidadeId,
-      assessorId: user.id,
+      assessorId: assessorPerfilId,
       handle: parsed.data.handle,
       nome: parsed.data.nome,
       perfilId: crypto.randomUUID(), // usado so se um pendente novo for criado
