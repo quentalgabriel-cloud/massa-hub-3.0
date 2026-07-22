@@ -34,9 +34,9 @@ export default async function LayoutAutenticado({
         >
           massa
         </Link>
-        <form action="/auth/signout" method="post">
-          <button
-            type="submit"
+        <nav className="flex items-center gap-1">
+          <Link
+            href="/perfil"
             className="text-sm px-3 flex items-center"
             style={{
               color: "var(--color-ink3)",
@@ -44,9 +44,22 @@ export default async function LayoutAutenticado({
               minHeight: "44px",
             }}
           >
-            Sair
-          </button>
-        </form>
+            Perfil
+          </Link>
+          <form action="/auth/signout" method="post">
+            <button
+              type="submit"
+              className="text-sm px-3 flex items-center"
+              style={{
+                color: "var(--color-ink3)",
+                fontFamily: "var(--font-mono)",
+                minHeight: "44px",
+              }}
+            >
+              Sair
+            </button>
+          </form>
+        </nav>
       </header>
       {children}
     </>
