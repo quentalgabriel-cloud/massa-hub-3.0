@@ -163,3 +163,81 @@ export async function publicarOportunidade(
     return { ok: false, erro: msg };
   }
 }
+
+// Forma serializada do Perfil vinculado para atravessar Server→Client.
+export interface PerfilVinculado {
+  id: string;
+  nome: string;
+  handle: string;
+  estado: "reivindicado" | "pendente";
+  criouPerfil: boolean;
+}
+
+const schemaVincular = z.object({
+  oportunidadeId: z.string().min(1),
+  nome: z.string().min(1, "Informe o nome do creator."),
+  handle: z.string().min(1, "Informe o handle do creator."),
+});
+
+// Vincula um creator da rede do assessor ao squad de uma oportunidade JA
+// publicada — a porta de entrada do claim profile (spec 03). O creator entra
+// PELA oportunidade (D7), nunca por cadastro em massa. Reusa o caso de uso
+// VincularCreatorAoSquad (chaveado por handle: cria pendente novo ou reusa
+// existente). A identidade do assessor vem da SESSAO, nunca do cliente.
+export async function vincularCreator(
+  formData: FormData,
+): Promise<Resultado<PerfilVinculado>> {
+  const supabase = await criarClienteSSR();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, erro: "Sessao expirada. Entre novamente." };
+
+  const parsed = schemaVincular.safeParse({
+    oportunidadeId: formData.get("oportunidadeId"),
+    nome: formData.get("nome"),
+    handle: formData.get("handle"),
+  });
+  if (!parsed.success) {
+    return { ok: false, erro: parsed.error.errors[0].message };
+  }
+
+  try {
+    const { VincularCreatorAoSquad } = await import(
+      "@aplicacao/VincularCreatorAoSquad"
+    );
+    const { PerfilRepositorioSupabase } = await import(
+      "@infra/supabase/PerfilRepositorioSupabase"
+    );
+    const { OportunidadeRepositorioSupabase } = await import(
+      "@infra/supabase/OportunidadeRepositorioSupabase"
+    );
+
+    const caso = new VincularCreatorAoSquad(
+      new PerfilRepositorioSupabase(),
+      new OportunidadeRepositorioSupabase(),
+    );
+
+    const { perfil, criouPerfil } = await caso.executar({
+      oportunidadeId: parsed.data.oportunidadeId,
+      assessorId: user.id,
+      handle: parsed.data.handle,
+      nome: parsed.data.nome,
+      perfilId: crypto.randomUUID(), // usado so se um pendente novo for criado
+    });
+
+    return {
+      ok: true,
+      dados: {
+        id: perfil.id,
+        nome: perfil.nome,
+        handle: perfil.handle.valor,
+        estado: perfil.estado,
+        criouPerfil,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erro desconhecido.";
+    return { ok: false, erro: msg };
+  }
+}

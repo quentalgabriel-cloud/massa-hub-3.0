@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { extrairTicket, publicarOportunidade } from "./actions";
-import type { TicketSerializado } from "./actions";
+import { extrairTicket, publicarOportunidade, vincularCreator } from "./actions";
+import type { TicketSerializado, PerfilVinculado } from "./actions";
 
 // ──────────────────────────────────────────────
 // Utilitarios de apresentacao
@@ -327,6 +327,159 @@ function Chip({ children }: { children: React.ReactNode }) {
 }
 
 // ──────────────────────────────────────────────
+// Painel de vinculo de creators ao squad (claim
+// profile, spec 03). Aparece apos publicar — so
+// entao existe uma oportunidade real que ancora o
+// perfil pendente (D7).
+// ──────────────────────────────────────────────
+
+function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) {
+  const [nome, setNome] = useState("");
+  const [handle, setHandle] = useState("");
+  const [vinculados, setVinculados] = useState<PerfilVinculado[]>([]);
+  const [erro, setErro] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleVincular() {
+    startTransition(async () => {
+      setErro(null);
+      const fd = new FormData();
+      fd.set("oportunidadeId", oportunidadeId);
+      fd.set("nome", nome.trim());
+      fd.set("handle", handle.trim());
+      const res = await vincularCreator(fd);
+      if (res.ok) {
+        // Evita duplicar visualmente se o mesmo handle for reusado.
+        setVinculados((prev) =>
+          prev.some((p) => p.id === res.dados.id)
+            ? prev
+            : [...prev, res.dados],
+        );
+        setNome("");
+        setHandle("");
+      } else {
+        setErro(res.erro);
+      }
+    });
+  }
+
+  const podeVincular =
+    nome.trim().length > 0 && handle.trim().length > 1 && !isPending;
+
+  return (
+    <div
+      className="rounded-[12px] border p-5 flex flex-col gap-4 w-full"
+      style={{ borderColor: "var(--color-line)", background: "var(--color-card)" }}
+    >
+      <div>
+        <span
+          className="text-xs font-medium tracking-widest uppercase block mb-0.5"
+          style={{ color: "var(--color-ink3)", fontFamily: "var(--font-mono)" }}
+        >
+          Vincular creators ao squad
+        </span>
+        <p className="text-sm" style={{ color: "var(--color-ink3)" }}>
+          Traga a sua rede. Cada creator vinculado nasce ancorado nesta
+          oportunidade — nunca por cadastro solto.
+        </p>
+      </div>
+
+      {vinculados.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {vinculados.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center justify-between gap-2 text-sm rounded-[8px] px-3 py-2"
+              style={{ background: "var(--color-paper)", fontFamily: "var(--font-mono)" }}
+            >
+              <span style={{ color: "var(--color-ink)" }}>
+                {p.nome}{" "}
+                <span style={{ color: "var(--color-ink3)" }}>@{p.handle}</span>
+              </span>
+              <span
+                className="text-xs px-1.5 py-0.5 rounded"
+                style={{
+                  background:
+                    p.estado === "pendente"
+                      ? "var(--color-violet-soft)"
+                      : "var(--color-ok-soft, var(--color-violet-soft))",
+                  color:
+                    p.estado === "pendente"
+                      ? "var(--color-violet-deep)"
+                      : "var(--color-ok, var(--color-violet-deep))",
+                }}
+                title={
+                  p.estado === "pendente"
+                    ? "Aguardando a pessoa reivindicar o perfil"
+                    : "Creator ja na rede"
+                }
+              >
+                {p.estado === "pendente"
+                  ? p.criouPerfil
+                    ? "vinculado · pendente"
+                    : "reusado · pendente"
+                  : "vinculado · na rede"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <input
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Nome do creator"
+          className="h-11 rounded-[8px] border px-3 text-sm outline-none transition-colors"
+          style={{
+            borderColor: "var(--color-line)",
+            background: "var(--color-paper)",
+            color: "var(--color-ink)",
+            fontSize: "16px",
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-violet)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
+        />
+        <input
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          placeholder="handle (ex.: anabeauty)"
+          className="h-11 rounded-[8px] border px-3 text-sm outline-none transition-colors"
+          style={{
+            borderColor: "var(--color-line)",
+            background: "var(--color-paper)",
+            color: "var(--color-ink)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "16px",
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-violet)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
+        />
+      </div>
+
+      {erro && (
+        <p className="text-sm" style={{ color: "#cc3300" }}>
+          {erro}
+        </p>
+      )}
+
+      <button
+        onClick={handleVincular}
+        disabled={!podeVincular}
+        className="h-11 rounded-[8px] font-semibold text-sm transition-opacity disabled:opacity-40"
+        style={{
+          background: "var(--color-violet)",
+          color: "#fff",
+          fontFamily: "var(--font-body)",
+        }}
+      >
+        {isPending ? "Vinculando..." : "Vincular creator"}
+      </button>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
 // Componente principal exportado
 // ──────────────────────────────────────────────
 
@@ -362,23 +515,34 @@ export default function NovaOportunidadeCliente({
 
   if (publicadoId) {
     return (
-      <div className="flex flex-col items-center gap-4 py-16">
-        <p
-          className="text-2xl font-bold"
-          style={{ fontFamily: "var(--font-display)", color: "var(--color-ok)" }}
-        >
-          Ticket publicado
-        </p>
-        <p className="text-sm" style={{ color: "var(--color-ink3)", fontFamily: "var(--font-mono)" }}>
-          ID: {publicadoId}
-        </p>
+      <div
+        className="flex flex-col items-center gap-6 py-12 w-full"
+        style={{ maxWidth: "560px", margin: "0 auto" }}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <p
+            className="text-2xl font-bold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--color-ok)" }}
+          >
+            Ticket publicado
+          </p>
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-ink3)", fontFamily: "var(--font-mono)" }}
+          >
+            ID: {publicadoId}
+          </p>
+        </div>
+
+        <PainelVincularCreators oportunidadeId={publicadoId} />
+
         <button
           onClick={() => {
             setPublicadoId(null);
             setTicket(null);
             setTextoBruto("");
           }}
-          className="text-sm underline mt-2"
+          className="text-sm underline"
           style={{ color: "var(--color-violet)" }}
         >
           Publicar outro ticket
