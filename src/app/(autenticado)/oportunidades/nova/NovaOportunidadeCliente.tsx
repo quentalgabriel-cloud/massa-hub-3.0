@@ -333,6 +333,36 @@ function Chip({ children }: { children: React.ReactNode }) {
 // perfil pendente (D7).
 // ──────────────────────────────────────────────
 
+function LinkReivindicacao({ perfilId }: { perfilId: string }) {
+  const [copiado, setCopiado] = useState(false);
+  const caminho = `/reivindicar/${perfilId}`;
+
+  function copiar() {
+    const url =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${caminho}`
+        : caminho;
+    navigator.clipboard?.writeText(url).then(
+      () => {
+        setCopiado(true);
+        setTimeout(() => setCopiado(false), 1500);
+      },
+      () => {},
+    );
+  }
+
+  return (
+    <button
+      onClick={copiar}
+      className="text-xs text-left underline underline-offset-2 truncate"
+      style={{ color: "var(--color-ink3)" }}
+      title="Copiar link para a pessoa reivindicar o perfil"
+    >
+      {copiado ? "link copiado ✓" : `copiar link de reivindicação · ${caminho}`}
+    </button>
+  );
+}
+
 function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) {
   const [nome, setNome] = useState("");
   const [handle, setHandle] = useState("");
@@ -389,37 +419,42 @@ function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) 
           {vinculados.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between gap-2 text-sm rounded-[8px] px-3 py-2"
+              className="flex flex-col gap-1.5 rounded-[8px] px-3 py-2"
               style={{ background: "var(--color-paper)", fontFamily: "var(--font-mono)" }}
             >
-              <span style={{ color: "var(--color-ink)" }}>
-                {p.nome}{" "}
-                <span style={{ color: "var(--color-ink3)" }}>@{p.handle}</span>
-              </span>
-              <span
-                className="text-xs px-1.5 py-0.5 rounded"
-                style={{
-                  background:
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span style={{ color: "var(--color-ink)" }}>
+                  {p.nome}{" "}
+                  <span style={{ color: "var(--color-ink3)" }}>@{p.handle}</span>
+                </span>
+                <span
+                  className="text-xs px-1.5 py-0.5 rounded"
+                  style={{
+                    background:
+                      p.estado === "pendente"
+                        ? "var(--color-violet-soft)"
+                        : "var(--color-ok-soft, var(--color-violet-soft))",
+                    color:
+                      p.estado === "pendente"
+                        ? "var(--color-violet-deep)"
+                        : "var(--color-ok, var(--color-violet-deep))",
+                  }}
+                  title={
                     p.estado === "pendente"
-                      ? "var(--color-violet-soft)"
-                      : "var(--color-ok-soft, var(--color-violet-soft))",
-                  color:
-                    p.estado === "pendente"
-                      ? "var(--color-violet-deep)"
-                      : "var(--color-ok, var(--color-violet-deep))",
-                }}
-                title={
-                  p.estado === "pendente"
-                    ? "Aguardando a pessoa reivindicar o perfil"
-                    : "Creator ja na rede"
-                }
-              >
-                {p.estado === "pendente"
-                  ? p.criouPerfil
-                    ? "vinculado · pendente"
-                    : "reusado · pendente"
-                  : "vinculado · na rede"}
-              </span>
+                      ? "Aguardando a pessoa reivindicar o perfil"
+                      : "Creator ja na rede"
+                  }
+                >
+                  {p.estado === "pendente"
+                    ? p.criouPerfil
+                      ? "vinculado · pendente"
+                      : "reusado · pendente"
+                    : "vinculado · na rede"}
+                </span>
+              </div>
+              {/* Sem e-mail na Fase 1 (growth loop da Fase 2): o assessor
+                  compartilha o link de reivindicacao manualmente. */}
+              {p.estado === "pendente" && <LinkReivindicacao perfilId={p.id} />}
             </div>
           ))}
         </div>
