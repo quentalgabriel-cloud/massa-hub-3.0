@@ -39,7 +39,29 @@ O perfil do assessor enfatiza: rede representada, marcas atendidas, squads monta
 histórico de oportunidades abertas. O do creator enfatiza: provas próprias, nicho,
 contas conectadas. Modelar como variações do mesmo núcleo, não duas entidades soltas.
 
+## Estado da implementação (Fase 1 — concluída)
+
+O claim mínimo foi construído em 3 camadas hexagonais (domínio → aplicação → infra/UI):
+
+- **Domínio**: `Perfil` (estados `pendente | reivindicado`) + `Handle`, com D7 como
+  invariante executável (`Perfil.criar` recusa pendente sem origem). Porta
+  `PerfilRepositorio`.
+- **Aplicação**: `VincularCreatorAoSquad` (chaveado por handle: cria pendente novo
+  ancorado OU reusa existente; liga via `Oportunidade.candidatar`) e
+  `ReivindicarPerfil` ("uma identidade, um nó").
+- **Infra/UI**: `PerfilRepositorioSupabase` + migration `perfis` (D7 também como
+  CHECK no banco, RLS deny-by-default). Na Screen 10, o assessor vincula creator
+  ao squad **após publicar** — só então existe uma oportunidade real para ancorar
+  o pendente. A pessoa reivindica em `/reivindicar/[perfilId]` (reusa Google auth).
+
+Sem e-mail na Fase 1: o link de reivindicação é distribuído manualmente pelo
+assessor (a ativação por e-mail é growth loop da Fase 2). A migration precisa ser
+aplicada no Supabase antes do uso em produção.
+
 ## Fora de escopo agora (não construir)
 
 - Portfólio visual rico (galeria, cases, vídeos) — incremental, depois do trilho.
 - Feed / conexões sociais / postagens — fase 2.
+- Ligar o perfil reivindicado às oportunidades do usuário (hoje `publicar`/
+  `candidatar` usam `user.id` como `perfilId` direto) — reconciliação de uma
+  próxima camada, não da Fase 1.
