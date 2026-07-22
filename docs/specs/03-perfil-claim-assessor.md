@@ -55,13 +55,32 @@ O claim mínimo foi construído em 3 camadas hexagonais (domínio → aplicaçã
   o pendente. A pessoa reivindica em `/reivindicar/[perfilId]` (reusa Google auth).
 
 Sem e-mail na Fase 1: o link de reivindicação é distribuído manualmente pelo
-assessor (a ativação por e-mail é growth loop da Fase 2). A migration precisa ser
-aplicada no Supabase antes do uso em produção.
+assessor (a ativação por e-mail é growth loop da Fase 2).
+
+### Onda 2 — o assessor logado é um Perfil real (concluída)
+
+Fechou o fio solto: `publicar`/`vincular` usavam `user.id` (id de auth) como se
+fosse `perfilId`, e o assessor não tinha nó em `perfis`. Agora:
+
+- `Handle.aPartirDe(bruto)` deriva um handle válido do nome/e-mail do Google.
+- `GarantirPerfilDoAssessor` faz get-or-create idempotente de um Perfil
+  `reivindicado` do tipo assessor (handle desambiguado por sufixo em colisão),
+  **sem formulário de onboarding** — provisiona no primeiro uso.
+- As actions de oportunidade usam `perfil.id` do assessor como `autorId`/
+  `assessorId`. O nó passa a existir: `/handle` e Lastro deixam de ficar órfãos.
+
+**Schema aplicado no Supabase** (as 4 tabelas da Fase 1 existem; o banco estava
+vazio). Para o app deployado funcionar, `SUPABASE_SERVICE_ROLE_KEY` precisa estar
+setada no ambiente do Vercel (o adapter acessa via service role).
 
 ## Fora de escopo agora (não construir)
 
 - Portfólio visual rico (galeria, cases, vídeos) — incremental, depois do trilho.
 - Feed / conexões sociais / postagens — fase 2.
-- Ligar o perfil reivindicado às oportunidades do usuário (hoje `publicar`/
-  `candidatar` usam `user.id` como `perfilId` direto) — reconciliação de uma
-  próxima camada, não da Fase 1.
+- **Reconciliação de `candidatar` e das provas** (namespace de `perfilId`). O
+  assessor já foi reconciliado (Onda 2, acima). Falta o mesmo para: a
+  auto-candidatura do creator (`oportunidades/[id]/actions.ts` ainda usa
+  `user.id`) e as ações de prova (`RegistrarProva`/`AssinarProva` usam
+  `criador_id`/`contratante_id`). Fica para a onda que habilitar "ver candidatos"
+  — o self-review do PR #9 marcou esse acoplamento. **Não é regressão**: hoje só
+  se lê `.length` das candidaturas; nada quebra até essa feature existir.
