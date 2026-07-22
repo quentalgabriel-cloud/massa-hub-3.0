@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { ExtrairTicket } from "@aplicacao/ExtrairTicket";
 import { PublicarOportunidade } from "@aplicacao/PublicarOportunidade";
 import { ExtratorDeTicketAnthropic } from "@infra/anthropic/ExtratorDeTicketAnthropic";
@@ -225,6 +226,9 @@ export async function vincularCreator(
       nome: parsed.data.nome,
       perfilId: crypto.randomUUID(), // usado so se um pendente novo for criado
     });
+
+    // A candidatura entrou na oportunidade — invalida a pagina de detalhe.
+    revalidatePath(`/oportunidades/${parsed.data.oportunidadeId}`);
 
     return {
       ok: true,

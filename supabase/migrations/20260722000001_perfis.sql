@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS perfis (
     estado <> 'pendente' OR (
       origem_oportunidade_id  IS NOT NULL AND
       origem_vinculado_por_id IS NOT NULL AND
+      origem_vinculado_em     IS NOT NULL AND
       usuario_id              IS NULL
     )
   ),
