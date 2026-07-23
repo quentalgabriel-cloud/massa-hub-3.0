@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VerPerfilPublico } from "@aplicacao/VerPerfilPublico";
 import type { PerfilPublicoDTO } from "@aplicacao/VerPerfilPublico";
@@ -115,10 +116,13 @@ function Fatos({ dto }: { dto: PerfilPublicoDTO }) {
       );
     }
     return (
-      <Secao titulo="Atividade">
-        <Fato n={oportunidadesPublicadas} rotulo="oportunidades publicadas" />
-        <Fato n={marcasAtendidas} rotulo="marcas atendidas" />
-      </Secao>
+      <div className="flex flex-col gap-8">
+        <Secao titulo="Atividade">
+          <Fato n={oportunidadesPublicadas} rotulo="oportunidades publicadas" />
+          <Fato n={marcasAtendidas} rotulo="marcas atendidas" />
+        </Secao>
+        <ListaOportunidades oportunidades={dto.oportunidades} />
+      </div>
     );
   }
 
@@ -174,6 +178,55 @@ function Fato({ n, rotulo }: { n: number; rotulo: string }) {
         {rotulo}
       </span>
     </div>
+  );
+}
+
+// A rede tecida: as oportunidades do assessor linkam para o próprio ticket.
+function ListaOportunidades({
+  oportunidades,
+}: {
+  oportunidades: { id: string; marca: string }[];
+}) {
+  return (
+    <section>
+      <h2
+        className="text-xs uppercase tracking-wider mb-4"
+        style={{ fontFamily: "var(--font-mono)", color: "var(--color-ink3)" }}
+      >
+        Oportunidades
+      </h2>
+      <ul className="flex flex-col gap-2">
+        {oportunidades.map((o) => (
+          <li key={o.id}>
+            <Link
+              href={`/oportunidades/${o.id}`}
+              className="flex items-center justify-between p-3 rounded-[10px] border border-line transition-colors hover:border-violet"
+              style={{ background: "var(--color-card)" }}
+            >
+              <span
+                className="text-base font-bold"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  color: "var(--color-ink)",
+                  fontStretch: "condensed",
+                }}
+              >
+                {o.marca}
+              </span>
+              <span
+                className="text-xs"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--color-ink3)",
+                }}
+              >
+                ver ticket →
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

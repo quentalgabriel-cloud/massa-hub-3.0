@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OportunidadeRepositorioSupabase } from "@infra/supabase/OportunidadeRepositorioSupabase";
+import { PerfilRepositorioSupabase } from "@infra/supabase/PerfilRepositorioSupabase";
 import BotaoCandidatura from "./BotaoCandidatura";
 
 export const metadata: Metadata = {
@@ -63,6 +64,13 @@ export default async function DetalheOportunidadePage({
   const repositorio = new OportunidadeRepositorioSupabase();
   const op = await repositorio.buscarPorId(id);
 
+  // A rede tecida: quem publicou. Resolve o Perfil do autor (perfil.id) para
+  // linkar ao /handle. null se o autor ainda não tem nó (não deveria ocorrer
+  // após a Onda 2, mas o guard mantém a página robusta).
+  const autor = op
+    ? await new PerfilRepositorioSupabase().buscarPorId(op.autorId)
+    : null;
+
   if (!op) {
     return (
       <main
@@ -111,6 +119,21 @@ export default async function DetalheOportunidadePage({
           >
             {op.marca}
           </h1>
+          {autor && (
+            <p className="mt-2 text-sm" style={{ color: "var(--color-ink3)" }}>
+              <span style={{ fontFamily: "var(--font-mono)" }}>publicado por </span>
+              <Link
+                href={`/${autor.handle.valor}`}
+                className="hover:underline"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--color-violet)",
+                }}
+              >
+                {autor.nome} · @{autor.handle.valor}
+              </Link>
+            </p>
+          )}
         </div>
 
         <Divisor />
