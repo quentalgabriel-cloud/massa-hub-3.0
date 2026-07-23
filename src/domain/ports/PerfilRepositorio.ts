@@ -6,6 +6,9 @@ import { Perfil } from "../perfil/Perfil";
 
 export interface PerfilRepositorio {
   buscarPorId(id: string): Promise<Perfil | null>;
+  // Busca em lote — resolve varios perfis numa query (evita N+1 ao listar
+  // oportunidades e mostrar o autor de cada uma). Ids sem match sao omitidos.
+  buscarPorIds(ids: string[]): Promise<Perfil[]>;
   buscarPorHandle(handle: string): Promise<Perfil | null>;
   // O perfil ja reivindicado por uma pessoa (auth) — base do "meu perfil".
   buscarPorUsuario(usuarioId: string): Promise<Perfil | null>;

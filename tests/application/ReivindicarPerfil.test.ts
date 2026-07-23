@@ -20,6 +20,7 @@ function perfilPendente(): Perfil {
 function perfisMock(overrides: Record<string, unknown> = {}) {
   return {
     buscarPorId: vi.fn().mockResolvedValue(perfilPendente()),
+    buscarPorIds: vi.fn().mockResolvedValue([]),
     buscarPorHandle: vi.fn(),
     buscarPorUsuario: vi.fn().mockResolvedValue(null),
     salvar: vi.fn().mockResolvedValue(undefined),

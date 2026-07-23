@@ -25,6 +25,7 @@ function novaOportunidade(
 function perfisMock(overrides: Record<string, unknown> = {}) {
   return {
     buscarPorId: vi.fn(),
+    buscarPorIds: vi.fn().mockResolvedValue([]),
     buscarPorHandle: vi.fn().mockResolvedValue(null),
     buscarPorUsuario: vi.fn(),
     salvar: vi.fn().mockResolvedValue(undefined),

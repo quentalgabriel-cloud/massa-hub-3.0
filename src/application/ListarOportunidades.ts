@@ -1,7 +1,10 @@
 import { OportunidadeRepositorio } from "@dominio/ports/OportunidadeRepositorio";
+import { PerfilRepositorio } from "@dominio/ports/PerfilRepositorio";
 
 // Caso de uso: lista oportunidades abertas com filtragem em memória.
 // Filtragem in-memory e suficiente para ~20-50 oportunidades (Fase 1).
+// Enriquece cada resumo com o autor (perfil) para tecer a rede na listagem —
+// resolvido em UMA query em lote (buscarPorIds), nunca N+1.
 
 export interface EntradaListarOportunidades {
   filtro?: {
@@ -20,10 +23,15 @@ export interface OportunidadeResumo {
   budget: number | undefined;
   prazo: Date | undefined;
   estruturadoPorIA: boolean;
+  // Quem publicou — link para o /handle. undefined se o autor não tem nó.
+  autor: { handle: string; nome: string } | undefined;
 }
 
 export class ListarOportunidades {
-  constructor(private readonly repositorio: OportunidadeRepositorio) {}
+  constructor(
+    private readonly repositorio: OportunidadeRepositorio,
+    private readonly perfis: PerfilRepositorio,
+  ) {}
 
   async executar(
     entrada: EntradaListarOportunidades = {},
@@ -49,17 +57,28 @@ export class ListarOportunidades {
       return true;
     });
 
-    return filtradas.map((op) => ({
-      id: op.id,
-      marca: op.marca,
-      totalPosicoes: op.squad.totalPosicoes(),
-      nichos: op.squad.papeis
-        .map((p) => p.nicho)
-        .filter((n): n is string => !!n),
-      regiao: op.regiao,
-      budget: op.budget,
-      prazo: op.prazo,
-      estruturadoPorIA: op.origem.estruturadoPorIA,
-    }));
+    // Resolve os autores em UMA query (ids distintos) e indexa por perfilId.
+    const autorIds = [...new Set(filtradas.map((op) => op.autorId))];
+    const autores = await this.perfis.buscarPorIds(autorIds);
+    const autorPorId = new Map(autores.map((a) => [a.id, a]));
+
+    return filtradas.map((op) => {
+      const autor = autorPorId.get(op.autorId);
+      return {
+        id: op.id,
+        marca: op.marca,
+        totalPosicoes: op.squad.totalPosicoes(),
+        nichos: op.squad.papeis
+          .map((p) => p.nicho)
+          .filter((n): n is string => !!n),
+        regiao: op.regiao,
+        budget: op.budget,
+        prazo: op.prazo,
+        estruturadoPorIA: op.origem.estruturadoPorIA,
+        autor: autor
+          ? { handle: autor.handle.valor, nome: autor.nome }
+          : undefined,
+      };
+    });
   }
 }

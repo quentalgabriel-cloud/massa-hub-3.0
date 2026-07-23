@@ -81,6 +81,17 @@ export class PerfilRepositorioSupabase implements PerfilRepositorio {
     return rowParaPerfil(data as unknown as PerfilRow);
   }
 
+  async buscarPorIds(ids: string[]): Promise<Perfil[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await this.cliente
+      .from("perfis")
+      .select(COLUNAS)
+      .in("id", ids);
+
+    if (error || !data) return [];
+    return (data as unknown as PerfilRow[]).map(rowParaPerfil);
+  }
+
   async buscarPorHandle(handle: string): Promise<Perfil | null> {
     const { data, error } = await this.cliente
       .from("perfis")

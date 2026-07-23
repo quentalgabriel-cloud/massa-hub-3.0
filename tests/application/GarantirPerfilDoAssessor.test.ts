@@ -6,6 +6,7 @@ import { Handle } from "@dominio/perfil/Handle";
 function perfisMock(overrides: Record<string, unknown> = {}) {
   return {
     buscarPorId: vi.fn(),
+    buscarPorIds: vi.fn().mockResolvedValue([]),
     buscarPorHandle: vi.fn().mockResolvedValue(null),
     buscarPorUsuario: vi.fn().mockResolvedValue(null),
     salvar: vi.fn().mockResolvedValue(undefined),
