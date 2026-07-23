@@ -73,6 +73,20 @@ fosse `perfilId`, e o assessor não tinha nó em `perfis`. Agora:
 vazio). Para o app deployado funcionar, `SUPABASE_SERVICE_ROLE_KEY` precisa estar
 setada no ambiente do Vercel (o adapter acessa via service role).
 
+### Ondas 3–5 — superfície de reputação e rede (concluídas)
+
+Com o nó do assessor real, o arco de reputação foi fechado:
+
+- **Onda 3** — página pública `/[handle]` (`VerPerfilPublico`): só fatos
+  contáveis (Lastro do creator / Atividade do assessor), sem score, sem heatmap
+  vazio, sem vitrine. DTO não vaza `usuario_id`.
+- **Onda 4 / 4b** — a rede tecida: detalhe da oportunidade → `/handle` do autor
+  (clicável); `/handle` do assessor → seus tickets; e atribuição "por @handle"
+  em cada card da lista (`buscarPorIds` em lote, sem N+1).
+- **Onda 5** — entrada "meu perfil" no header: resolve o Perfil do logado e
+  redireciona ao `/handle`, ou mostra empty state honesto. **Não auto-provisiona**
+  (isso quebraria o claim do creator) — o nó nasce lazy, nas ações reais.
+
 ## Fora de escopo agora (não construir)
 
 - Portfólio visual rico (galeria, cases, vídeos) — incremental, depois do trilho.
