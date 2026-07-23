@@ -28,6 +28,9 @@ export interface PerfilPublicoDTO {
     oportunidadesPublicadas: number;
     marcasAtendidas: number;
   };
+  // As oportunidades publicadas pelo perfil (assessor), leves, para tecer a
+  // rede: o /handle linka para cada oportunidade. Vazio para creator.
+  oportunidades: { id: string; marca: string }[];
 }
 
 export class VerPerfilPublico {
@@ -69,6 +72,10 @@ export class VerPerfilPublico {
         oportunidadesPublicadas: oportunidadesDoPerfil.length,
         marcasAtendidas,
       },
+      oportunidades: oportunidadesDoPerfil.map((o) => ({
+        id: o.id,
+        marca: o.marca,
+      })),
     };
   }
 }

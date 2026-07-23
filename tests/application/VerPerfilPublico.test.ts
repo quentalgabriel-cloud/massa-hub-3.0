@@ -23,9 +23,9 @@ function creator() {
   });
 }
 
-// Oportunidade fake minima: so o que VerPerfilPublico le (marca).
-function op(marca: string) {
-  return { marca } as unknown as import("@dominio/oportunidade/Oportunidade").Oportunidade;
+// Oportunidade fake minima: so o que VerPerfilPublico le (id + marca).
+function op(id: string, marca: string) {
+  return { id, marca } as unknown as import("@dominio/oportunidade/Oportunidade").Oportunidade;
 }
 
 function repos(over: {
@@ -91,7 +91,7 @@ describe("VerPerfilPublico", () => {
   it("conta atividade do assessor (oportunidades + marcas distintas)", async () => {
     const { perfis, oportunidades, provas } = repos({
       perfil: assessor(),
-      oportunidades: [op("Nike"), op("Adidas"), op("Nike")],
+      oportunidades: [op("op-1", "Nike"), op("op-2", "Adidas"), op("op-3", "Nike")],
     });
     const caso = new VerPerfilPublico(
       perfis as never,
@@ -102,6 +102,11 @@ describe("VerPerfilPublico", () => {
     expect(dto?.tipo).toBe("assessor");
     expect(dto?.atividade.oportunidadesPublicadas).toBe(3);
     expect(dto?.atividade.marcasAtendidas).toBe(2); // Nike, Adidas
+    expect(dto?.oportunidades).toEqual([
+      { id: "op-1", marca: "Nike" },
+      { id: "op-2", marca: "Adidas" },
+      { id: "op-3", marca: "Nike" },
+    ]);
     expect(dto).not.toHaveProperty("usuarioId"); // DTO nao vaza id de auth
   });
 
