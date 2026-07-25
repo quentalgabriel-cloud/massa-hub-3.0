@@ -118,8 +118,16 @@ function Fatos({ dto }: { dto: PerfilPublicoDTO }) {
     return (
       <div className="flex flex-col gap-8">
         <Secao titulo="Atividade">
-          <Fato n={oportunidadesPublicadas} rotulo="oportunidades publicadas" />
-          <Fato n={marcasAtendidas} rotulo="marcas atendidas" />
+          <Fato
+            n={oportunidadesPublicadas}
+            rotulo="oportunidade publicada"
+            plural="oportunidades publicadas"
+          />
+          <Fato
+            n={marcasAtendidas}
+            rotulo="marca atendida"
+            plural="marcas atendidas"
+          />
         </Secao>
         <ListaOportunidades oportunidades={dto.oportunidades} />
       </div>
@@ -134,9 +142,21 @@ function Fatos({ dto }: { dto: PerfilPublicoDTO }) {
   }
   return (
     <Secao titulo="Lastro">
-      <Fato n={provasVerificadas} rotulo="provas verificadas" />
-      <Fato n={marcasDistintas} rotulo="marcas distintas" />
-      <Fato n={marcasRecorrentes} rotulo="marcas recorrentes" />
+      <Fato
+        n={provasVerificadas}
+        rotulo="prova verificada"
+        plural="provas verificadas"
+      />
+      <Fato
+        n={marcasDistintas}
+        rotulo="marca distinta"
+        plural="marcas distintas"
+      />
+      <Fato
+        n={marcasRecorrentes}
+        rotulo="marca recorrente"
+        plural="marcas recorrentes"
+      />
     </Secao>
   );
 }
@@ -162,7 +182,17 @@ function Secao({
 }
 
 // Fato = numero cru + rotulo (nunca nota/score). Numero em mono, tabular.
-function Fato({ n, rotulo }: { n: number; rotulo: string }) {
+// `rotulo` e o singular; `plural` e usado quando n != 1 ("1 prova verificada",
+// "3 provas verificadas") — 0 usa o plural, como em PT-BR.
+function Fato({
+  n,
+  rotulo,
+  plural,
+}: {
+  n: number;
+  rotulo: string;
+  plural: string;
+}) {
   return (
     <div
       className="flex flex-col gap-1 p-4 rounded-[12px] border border-line"
@@ -175,7 +205,7 @@ function Fato({ n, rotulo }: { n: number; rotulo: string }) {
         {n}
       </span>
       <span className="text-xs" style={{ color: "var(--color-ink2)" }}>
-        {rotulo}
+        {n === 1 ? rotulo : plural}
       </span>
     </div>
   );
