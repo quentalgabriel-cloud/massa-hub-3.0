@@ -91,10 +91,26 @@ Com o nó do assessor real, o arco de reputação foi fechado:
 
 - Portfólio visual rico (galeria, cases, vídeos) — incremental, depois do trilho.
 - Feed / conexões sociais / postagens — fase 2.
-- **Reconciliação de `candidatar` e das provas** (namespace de `perfilId`). O
-  assessor já foi reconciliado (Onda 2, acima). Falta o mesmo para: a
-  auto-candidatura do creator (`oportunidades/[id]/actions.ts` ainda usa
-  `user.id`) e as ações de prova (`RegistrarProva`/`AssinarProva` usam
-  `criador_id`/`contratante_id`). Fica para a onda que habilitar "ver candidatos"
-  — o self-review do PR #9 marcou esse acoplamento. **Não é regressão**: hoje só
-  se lê `.length` das candidaturas; nada quebra até essa feature existir.
+- **Reconciliação de `candidatar`** (namespace de `perfilId`). A
+  auto-candidatura do creator (`oportunidades/[id]/actions.ts`) ainda usa
+  `user.id`. Fica para a onda que habilitar "ver candidatos". **Não é
+  regressão**: hoje só se lê `.length` das candidaturas.
+
+### Onda 6 — o Lastro ligado ao grafo (concluída)
+
+Correção de um bug real, achado em revisão: as provas gravavam
+criador/contratante/assinante com `user.id` (auth), enquanto `VerPerfilPublico`
+lê provas por `perfil.id`. **O Lastro no `/handle` seria sempre zero**, mesmo com
+provas assinadas — a superfície de reputação (D1) quebrada em silêncio.
+
+- `ResolverPerfis` (aplicação): sessão → perfil, `@handle` → perfil, com erros
+  orientadores. Não cria perfil (D7 — o nó nasce do trabalho).
+- Ações de prova usam `perfil.id` e revalidam os `/handle` afetados.
+- `/provas` lista pelo perfil e mostra "Nome · @handle" (contrapartes resolvidas
+  em lote, sem N+1); o form pede `@handle` no lugar de um UUID digitado à mão.
+
+Lição registrada: na Onda 3/4 essa reconciliação foi classificada como YAGNI —
+correto naquele momento, e **invalidado pela própria Onda 3**, que criou o
+consumidor (`/handle` lendo provas por perfilId). Dívida vira bug quando o
+consumidor aparece; revisar classificações de YAGNI a cada onda que adiciona
+leitura nova.
