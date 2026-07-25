@@ -91,10 +91,8 @@ Com o nó do assessor real, o arco de reputação foi fechado:
 
 - Portfólio visual rico (galeria, cases, vídeos) — incremental, depois do trilho.
 - Feed / conexões sociais / postagens — fase 2.
-- **Reconciliação de `candidatar`** (namespace de `perfilId`). A
-  auto-candidatura do creator (`oportunidades/[id]/actions.ts`) ainda usa
-  `user.id`. Fica para a onda que habilitar "ver candidatos". **Não é
-  regressão**: hoje só se lê `.length` das candidaturas.
+- ~~Reconciliação de `candidatar`~~ — **feito na Onda 7** (abaixo). Não há mais
+  nenhum ponto do app usando `user.id` como `perfilId`.
 
 ### Onda 6 — o Lastro ligado ao grafo (concluída)
 
@@ -114,3 +112,11 @@ correto naquele momento, e **invalidado pela própria Onda 3**, que criou o
 consumidor (`/handle` lendo provas por perfilId). Dívida vira bug quando o
 consumidor aparece; revisar classificações de YAGNI a cada onda que adiciona
 leitura nova.
+
+### Onda 7 — ver o squad, e o último namespace (concluída)
+
+- `candidatar` passa a usar `perfil.id`. **Nenhum ponto do app usa mais
+  `user.id` como `perfilId`** — o grafo é coerente de ponta a ponta.
+- O detalhe da oportunidade mostra o squad montado: "Nome · @handle", link para
+  cada `/handle`, marca de "pendente" em quem ainda não reivindicou. Resolvido
+  em lote (`buscarPorIds`). Antes existia só uma contagem opaca.
