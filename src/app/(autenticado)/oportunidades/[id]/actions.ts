@@ -3,7 +3,9 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { CandidatarPerfil } from "@aplicacao/CandidatarPerfil";
+import { ResolverPerfis } from "@aplicacao/ResolverPerfis";
 import { OportunidadeRepositorioSupabase } from "@infra/supabase/OportunidadeRepositorioSupabase";
+import { PerfilRepositorioSupabase } from "@infra/supabase/PerfilRepositorioSupabase";
 import { criarClienteSSR } from "@infra/supabase/cliente";
 
 const schema = z.object({
@@ -28,11 +30,17 @@ export async function candidatar(
   }
 
   try {
+    // Candidatura é do NÓ da rede (perfil.id), não do id de auth — é o mesmo
+    // namespace que o vínculo feito pelo assessor usa.
+    const eu = await new ResolverPerfis(new PerfilRepositorioSupabase()).doUsuario(
+      user.id,
+    );
+
     const repositorio = new OportunidadeRepositorioSupabase();
     const caso = new CandidatarPerfil(repositorio);
     await caso.executar({
       oportunidadeId: parsed.data.oportunidadeId,
-      perfilId: user.id,
+      perfilId: eu.id,
     });
     revalidatePath(`/oportunidades/${parsed.data.oportunidadeId}`);
     return { ok: true };
