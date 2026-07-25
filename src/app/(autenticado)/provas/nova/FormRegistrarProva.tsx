@@ -127,16 +127,24 @@ export default function FormRegistrarProva() {
       </fieldset>
 
       <div>
-        <label style={rotulo} htmlFor="outraParteId">
-          ID da outra parte
+        <label style={rotulo} htmlFor="outraParteHandle">
+          Outra parte (@handle)
         </label>
-        <input id="outraParteId" name="outraParteId" style={campo} />
+        <input
+          id="outraParteHandle"
+          name="outraParteHandle"
+          style={campo}
+          placeholder="@anabeauty"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+        />
         <p
           className="text-xs mt-1.5"
           style={{ color: "var(--color-ink3)", fontFamily: "var(--font-mono)" }}
         >
-          Por enquanto, cole o ID do usuario da outra parte. Um seletor por perfil
-          vem quando existir diretorio de perfis.
+          O handle publico de quem participou do trabalho. Ela precisa estar na
+          rede — vincule pela oportunidade primeiro, se ainda nao estiver.
         </p>
       </div>
 
