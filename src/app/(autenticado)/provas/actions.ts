@@ -4,7 +4,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { RegistrarProva } from "@aplicacao/RegistrarProva";
 import { AssinarProva } from "@aplicacao/AssinarProva";
+import { ResolverPerfis } from "@aplicacao/ResolverPerfis";
 import { ProvaRepositorioSupabase } from "@infra/supabase/ProvaRepositorioSupabase";
+import { PerfilRepositorioSupabase } from "@infra/supabase/PerfilRepositorioSupabase";
 import { criarClienteServidor, criarClienteSSR } from "@infra/supabase/cliente";
 
 type Resultado = { ok: true } | { ok: false; erro: string };
@@ -13,13 +15,19 @@ function repositorio() {
   return new ProvaRepositorioSupabase(criarClienteServidor());
 }
 
+// A Prova é entre NÓS DA REDE (perfilId), nunca entre ids de auth — senão o
+// Lastro não aparece no /handle, que lê provas por perfil.id.
+function resolvedor() {
+  return new ResolverPerfis(new PerfilRepositorioSupabase());
+}
+
 const schemaRegistrar = z.object({
   tipo: z.enum(["campanha", "consultoria", "festival", "negociacao", "outro"]),
   titulo: z.string().min(1, "Titulo obrigatorio."),
   descricao: z.string().min(1, "Descricao obrigatoria."),
   resultado: z.string().optional(),
   ladoRegistrante: z.enum(["criador", "contratante"]),
-  outraParteId: z.string().min(1, "Informe o ID da outra parte."),
+  outraParteHandle: z.string().min(1, "Informe o @handle da outra parte."),
 });
 
 export async function registrarProva(formData: FormData): Promise<Resultado> {
@@ -36,7 +44,7 @@ export async function registrarProva(formData: FormData): Promise<Resultado> {
     descricao: formData.get("descricao"),
     resultado: formData.get("resultado") || undefined,
     ladoRegistrante: formData.get("ladoRegistrante"),
-    outraParteId: formData.get("outraParteId"),
+    outraParteHandle: formData.get("outraParteHandle"),
   });
   if (!parsed.success) {
     return { ok: false, erro: parsed.error.errors[0].message };
@@ -45,18 +53,25 @@ export async function registrarProva(formData: FormData): Promise<Resultado> {
   const d = parsed.data;
   const ehCriador = d.ladoRegistrante === "criador";
   try {
+    // Identidades como nós da rede: eu (sessão) e a outra parte (@handle).
+    const perfis = resolvedor();
+    const eu = await perfis.doUsuario(user.id);
+    const outra = await perfis.porHandle(d.outraParteHandle);
+
     await new RegistrarProva(repositorio()).executar({
       id: crypto.randomUUID(),
       tipo: d.tipo,
       titulo: d.titulo,
       descricao: d.descricao,
       resultado: d.resultado,
-      criadorId: ehCriador ? user.id : d.outraParteId,
-      contratanteId: ehCriador ? d.outraParteId : user.id,
-      registranteId: user.id,
+      criadorId: ehCriador ? eu.id : outra.id,
+      contratanteId: ehCriador ? outra.id : eu.id,
+      registranteId: eu.id,
       ladoRegistrante: d.ladoRegistrante,
     });
     revalidatePath("/provas");
+    revalidatePath(`/${eu.handle.valor}`);
+    revalidatePath(`/${outra.handle.valor}`);
     return { ok: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro desconhecido.";
@@ -79,11 +94,15 @@ export async function assinarProva(formData: FormData): Promise<Resultado> {
   }
 
   try {
+    // Assina como nó da rede (perfil.id), o mesmo id gravado na prova.
+    const eu = await resolvedor().doUsuario(user.id);
     await new AssinarProva(repositorio()).executar({
       provaId: parsed.data.provaId,
-      assinanteId: user.id,
+      assinanteId: eu.id,
     });
     revalidatePath("/provas");
+    // A prova pode ter virado verificada — o Lastro público muda.
+    revalidatePath(`/${eu.handle.valor}`);
     return { ok: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro desconhecido.";

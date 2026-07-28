@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OportunidadeRepositorioSupabase } from "@infra/supabase/OportunidadeRepositorioSupabase";
+import { PerfilRepositorioSupabase } from "@infra/supabase/PerfilRepositorioSupabase";
 import { ListarOportunidades } from "@aplicacao/ListarOportunidades";
 import { CardOportunidade } from "@/components/oportunidades/CardOportunidade";
 import { FiltrosOportunidades } from "@/components/oportunidades/FiltrosOportunidades";
@@ -20,7 +21,10 @@ export default async function OportunidadesPage({ searchParams }: PageProps) {
   const regiao = params.regiao?.trim() || undefined;
 
   const repositorio = new OportunidadeRepositorioSupabase();
-  const listar = new ListarOportunidades(repositorio);
+  const listar = new ListarOportunidades(
+    repositorio,
+    new PerfilRepositorioSupabase(),
+  );
 
   const oportunidades = await listar.executar({ filtro: { nicho, regiao } });
 

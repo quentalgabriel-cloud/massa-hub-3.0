@@ -39,7 +39,84 @@ O perfil do assessor enfatiza: rede representada, marcas atendidas, squads monta
 histórico de oportunidades abertas. O do creator enfatiza: provas próprias, nicho,
 contas conectadas. Modelar como variações do mesmo núcleo, não duas entidades soltas.
 
+## Estado da implementação (Fase 1 — concluída)
+
+O claim mínimo foi construído em 3 camadas hexagonais (domínio → aplicação → infra/UI):
+
+- **Domínio**: `Perfil` (estados `pendente | reivindicado`) + `Handle`, com D7 como
+  invariante executável (`Perfil.criar` recusa pendente sem origem). Porta
+  `PerfilRepositorio`.
+- **Aplicação**: `VincularCreatorAoSquad` (chaveado por handle: cria pendente novo
+  ancorado OU reusa existente; liga via `Oportunidade.candidatar`) e
+  `ReivindicarPerfil` ("uma identidade, um nó").
+- **Infra/UI**: `PerfilRepositorioSupabase` + migration `perfis` (D7 também como
+  CHECK no banco, RLS deny-by-default). Na Screen 10, o assessor vincula creator
+  ao squad **após publicar** — só então existe uma oportunidade real para ancorar
+  o pendente. A pessoa reivindica em `/reivindicar/[perfilId]` (reusa Google auth).
+
+Sem e-mail na Fase 1: o link de reivindicação é distribuído manualmente pelo
+assessor (a ativação por e-mail é growth loop da Fase 2).
+
+### Onda 2 — o assessor logado é um Perfil real (concluída)
+
+Fechou o fio solto: `publicar`/`vincular` usavam `user.id` (id de auth) como se
+fosse `perfilId`, e o assessor não tinha nó em `perfis`. Agora:
+
+- `Handle.aPartirDe(bruto)` deriva um handle válido do nome/e-mail do Google.
+- `GarantirPerfilDoAssessor` faz get-or-create idempotente de um Perfil
+  `reivindicado` do tipo assessor (handle desambiguado por sufixo em colisão),
+  **sem formulário de onboarding** — provisiona no primeiro uso.
+- As actions de oportunidade usam `perfil.id` do assessor como `autorId`/
+  `assessorId`. O nó passa a existir: `/handle` e Lastro deixam de ficar órfãos.
+
+**Schema aplicado no Supabase** (as 4 tabelas da Fase 1 existem; o banco estava
+vazio). Para o app deployado funcionar, `SUPABASE_SERVICE_ROLE_KEY` precisa estar
+setada no ambiente do Vercel (o adapter acessa via service role).
+
+### Ondas 3–5 — superfície de reputação e rede (concluídas)
+
+Com o nó do assessor real, o arco de reputação foi fechado:
+
+- **Onda 3** — página pública `/[handle]` (`VerPerfilPublico`): só fatos
+  contáveis (Lastro do creator / Atividade do assessor), sem score, sem heatmap
+  vazio, sem vitrine. DTO não vaza `usuario_id`.
+- **Onda 4 / 4b** — a rede tecida: detalhe da oportunidade → `/handle` do autor
+  (clicável); `/handle` do assessor → seus tickets; e atribuição "por @handle"
+  em cada card da lista (`buscarPorIds` em lote, sem N+1).
+- **Onda 5** — entrada "meu perfil" no header: resolve o Perfil do logado e
+  redireciona ao `/handle`, ou mostra empty state honesto. **Não auto-provisiona**
+  (isso quebraria o claim do creator) — o nó nasce lazy, nas ações reais.
+
 ## Fora de escopo agora (não construir)
 
 - Portfólio visual rico (galeria, cases, vídeos) — incremental, depois do trilho.
 - Feed / conexões sociais / postagens — fase 2.
+- ~~Reconciliação de `candidatar`~~ — **feito na Onda 7** (abaixo). Não há mais
+  nenhum ponto do app usando `user.id` como `perfilId`.
+
+### Onda 6 — o Lastro ligado ao grafo (concluída)
+
+Correção de um bug real, achado em revisão: as provas gravavam
+criador/contratante/assinante com `user.id` (auth), enquanto `VerPerfilPublico`
+lê provas por `perfil.id`. **O Lastro no `/handle` seria sempre zero**, mesmo com
+provas assinadas — a superfície de reputação (D1) quebrada em silêncio.
+
+- `ResolverPerfis` (aplicação): sessão → perfil, `@handle` → perfil, com erros
+  orientadores. Não cria perfil (D7 — o nó nasce do trabalho).
+- Ações de prova usam `perfil.id` e revalidam os `/handle` afetados.
+- `/provas` lista pelo perfil e mostra "Nome · @handle" (contrapartes resolvidas
+  em lote, sem N+1); o form pede `@handle` no lugar de um UUID digitado à mão.
+
+Lição registrada: na Onda 3/4 essa reconciliação foi classificada como YAGNI —
+correto naquele momento, e **invalidado pela própria Onda 3**, que criou o
+consumidor (`/handle` lendo provas por perfilId). Dívida vira bug quando o
+consumidor aparece; revisar classificações de YAGNI a cada onda que adiciona
+leitura nova.
+
+### Onda 7 — ver o squad, e o último namespace (concluída)
+
+- `candidatar` passa a usar `perfil.id`. **Nenhum ponto do app usa mais
+  `user.id` como `perfilId`** — o grafo é coerente de ponta a ponta.
+- O detalhe da oportunidade mostra o squad montado: "Nome · @handle", link para
+  cada `/handle`, marca de "pendente" em quem ainda não reivindicou. Resolvido
+  em lote (`buscarPorIds`). Antes existia só uma contagem opaca.

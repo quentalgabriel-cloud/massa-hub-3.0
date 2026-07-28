@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteSSR, criarClienteServidor } from "@infra/supabase/cliente";
 import { ProvaRepositorioSupabase } from "@infra/supabase/ProvaRepositorioSupabase";
+import { PerfilRepositorioSupabase } from "@infra/supabase/PerfilRepositorioSupabase";
 import type { Prova } from "@dominio/prova/Prova";
 import BotaoAssinar from "./BotaoAssinar";
 
@@ -39,13 +40,60 @@ function StatusChip({ verificada }: { verificada: boolean }) {
   );
 }
 
+// O nó nasce do trabalho (D7), nunca de cadastro solto: sem perfil, não há
+// prova a registrar. Diz o caminho em vez de mostrar uma lista vazia sem razão.
+function SemPerfil() {
+  return (
+    <main
+      className="min-h-screen px-4 py-16"
+      style={{ background: "var(--color-paper)" }}
+    >
+      <div className="max-w-xl mx-auto">
+        <h1
+          className="text-3xl font-black leading-none mb-4"
+          style={{
+            fontFamily: "var(--font-display)",
+            color: "var(--color-ink)",
+            fontStretch: "condensed",
+          }}
+        >
+          Provas exigem um perfil na rede
+        </h1>
+        <p className="text-base mb-8" style={{ color: "var(--color-ink2)" }}>
+          Uma prova é trabalho real assinado pelos dois lados — os dois precisam
+          ser nós da rede. Seu perfil nasce ao publicar uma oportunidade (como
+          assessor) ou ao reivindicar um vínculo (como creator).
+        </p>
+        <Link
+          href="/oportunidades/nova"
+          className="inline-flex items-center px-5 rounded-[8px] text-sm font-semibold"
+          style={{
+            background: "var(--color-violet)",
+            color: "#fff",
+            fontFamily: "var(--font-body)",
+            minHeight: "44px",
+          }}
+        >
+          Publicar uma oportunidade
+        </Link>
+      </div>
+    </main>
+  );
+}
+
 export default async function ProvasPage() {
   const supabase = await criarClienteSSR();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const meuId = user.id;
+
+  // Provas são entre nós da rede: listo pelo MEU perfil (não pelo id de auth).
+  // Sem nó ainda? Não há prova possível — a página explica em vez de quebrar.
+  const perfis = new PerfilRepositorioSupabase();
+  const eu = await perfis.buscarPorUsuario(user.id);
+  if (!eu) return <SemPerfil />;
+  const meuId = eu.id;
 
   const repo = new ProvaRepositorioSupabase(criarClienteServidor());
   const provas = await repo.listarPorParte(meuId);
@@ -53,8 +101,19 @@ export default async function ProvasPage() {
   const pendentes = provas.filter(
     (p) => !p.estaVerificada() && !p.assinaturas.some((a) => a.autorId === meuId),
   );
-  const outraParte = (p: Prova) =>
+  const idOutraParte = (p: Prova) =>
     p.criadorId === meuId ? p.contratanteId : p.criadorId;
+
+  // Resolve os nomes das contrapartes numa única query (sem N+1) — a tela
+  // mostra "Ana Beauty · @anabeauty", nunca um id opaco.
+  const contrapartes = await perfis.buscarPorIds([
+    ...new Set(provas.map(idOutraParte)),
+  ]);
+  const porId = new Map(contrapartes.map((p) => [p.id, p]));
+  const outraParte = (p: Prova) => {
+    const perfil = porId.get(idOutraParte(p));
+    return perfil ? `${perfil.nome} · @${perfil.handle.valor}` : "fora da rede";
+  };
 
   return (
     <main

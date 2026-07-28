@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OportunidadeRepositorioSupabase } from "@infra/supabase/OportunidadeRepositorioSupabase";
+import { PerfilRepositorioSupabase } from "@infra/supabase/PerfilRepositorioSupabase";
 import BotaoCandidatura from "./BotaoCandidatura";
 
 export const metadata: Metadata = {
@@ -63,6 +64,12 @@ export default async function DetalheOportunidadePage({
   const repositorio = new OportunidadeRepositorioSupabase();
   const op = await repositorio.buscarPorId(id);
 
+  // A rede tecida: quem publicou e quem está no squad. Resolve os Perfis
+  // (perfil.id) para linkar ao /handle. Uma query em lote para os candidatos.
+  const perfis = new PerfilRepositorioSupabase();
+  const autor = op ? await perfis.buscarPorId(op.autorId) : null;
+  const candidatos = op ? await perfis.buscarPorIds([...op.candidaturas]) : [];
+
   if (!op) {
     return (
       <main
@@ -111,6 +118,21 @@ export default async function DetalheOportunidadePage({
           >
             {op.marca}
           </h1>
+          {autor && (
+            <p className="mt-2 text-sm" style={{ color: "var(--color-ink3)" }}>
+              <span style={{ fontFamily: "var(--font-mono)" }}>publicado por </span>
+              <Link
+                href={`/${autor.handle.valor}`}
+                className="hover:underline"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--color-violet)",
+                }}
+              >
+                {autor.nome} · @{autor.handle.valor}
+              </Link>
+            </p>
+          )}
         </div>
 
         <Divisor />
@@ -217,6 +239,58 @@ export default async function DetalheOportunidadePage({
 
         <Divisor />
 
+        {/* O squad montado: quem já está vinculado a esta oportunidade */}
+        {op.candidaturas.length > 0 && (
+          <div>
+            <Label>
+              No squad · {op.candidaturas.length}{" "}
+              {op.candidaturas.length === 1 ? "pessoa" : "pessoas"}
+            </Label>
+            <ul className="flex flex-col gap-2 mt-1">
+              {candidatos.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/${p.handle.valor}`}
+                    className="flex items-center justify-between gap-3 p-3 rounded-[10px] border transition-colors hover:border-violet"
+                    style={{
+                      borderColor: "var(--color-line)",
+                      background: "var(--color-card)",
+                    }}
+                  >
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: "var(--color-ink)" }}
+                    >
+                      {p.nome}
+                      <span
+                        style={{
+                          color: "var(--color-ink3)",
+                          fontFamily: "var(--font-mono)",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {" "}
+                        · @{p.handle.valor}
+                      </span>
+                    </span>
+                    {p.estaPendente() && (
+                      <span
+                        className="text-xs shrink-0"
+                        style={{
+                          color: "var(--color-ink3)",
+                          fontFamily: "var(--font-mono)",
+                        }}
+                      >
+                        pendente
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Nota de origem */}
         <p
           className="text-xs"
@@ -224,9 +298,6 @@ export default async function DetalheOportunidadePage({
         >
           {op.origem.estruturadoPorIA ? "Estruturado por IA · " : ""}
           {op.origem.revisadoPeloAutor ? "Revisado pelo autor" : "Aguardando revisao"}
-          {" · "}
-          {op.candidaturas.length} candidatura
-          {op.candidaturas.length !== 1 ? "s" : ""}
         </p>
 
         {/* Ações */}

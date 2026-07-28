@@ -113,3 +113,35 @@ YOUPIX Summit 2026 (29/set, SP) é o go/no-go do ano. Pagamento do estande até
 jul/2026. Critérios: módulo de oportunidades em beta com 20–50 oportunidades reais,
 200–500 perfis (concentração em assessores), 2–3 agências testando, 3–5 parcerias.
 Se não atingir: ir como visitante, mirar 2027.
+
+## D12 — Provedor de IA continua Anthropic (Haiku); critério de reavaliação registrado
+
+Contexto: fundador pediu pesquisa de alternativa gratuita/mais barata (incl. modelo
+chinês) para a extração de ticket, com a meta de "atender a demanda inicial mas
+deixar preparado para evoluir".
+
+Pesquisa (web, jul/2026): "grátis" quase sempre significa que o provedor treina em
+cima dos seus prompts — e o que mandamos pra extração é dado sensível real (marca,
+budget, nomes de creator). API oficial da DeepSeek processa e armazena na China, ToS
+permite treinar nos dados, e já foi restringida em governos (Itália, Austrália,
+Taiwan, Coreia do Sul) por isso — inadequada para dado de cliente. É possível rodar
+modelos chineses (Qwen/DeepSeek) via host ocidental (ex. Groq, SOC 2) sem esse risco,
+mas isso ainda seria trocar de adapter por uma economia irrelevante no volume atual
+(~50 oportunidades/mês custam centavos no Haiku).
+
+Decisão: manter Claude Haiku como provedor da Fase 1. Não construir abstração
+multi-provedor agora — a porta `ExtratorDeTicket` (D11, hexagonal) já torna uma troca
+futura um novo adapter + uma linha na composição, sem tocar domínio/aplicação. Prédio
+especulativo de "seleção de provedor por config" antes de existir um segundo provedor
+real seria o anti-padrão #1 em código.
+
+Preparação de baixo custo feita agora (sem abstração nova):
+- Nome do modelo saiu do hardcode → `ANTHROPIC_MODEL` (env var, default Haiku atual).
+  Testar um modelo novo vira config, não deploy de código.
+- Log estruturado por extração (`evento: "extracao_ticket"`): confiança, latência,
+  tokens de entrada/saída — greppável nos runtime logs do Vercel.
+
+Critério objetivo de reavaliação (mesmo espírito da reabertura do D10 — dado, não
+vontade): revisitar o provedor quando os logs acima mostrarem confiança média
+caindo, ou quando o volume real de oportunidades tornar o custo (não mais centavos)
+uma variável que importa. Até lá, esta decisão permanece.

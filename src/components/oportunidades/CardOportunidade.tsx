@@ -31,6 +31,7 @@ export function CardOportunidade({ oportunidade }: Props) {
     budget,
     prazo,
     estruturadoPorIA,
+    autor,
   } = oportunidade;
 
   return (
@@ -81,6 +82,19 @@ export function CardOportunidade({ oportunidade }: Props) {
         >
           {marca}
         </h2>
+
+        {/* Atribuição: quem publicou (texto — o card inteiro já linka o ticket) */}
+        {autor && (
+          <p
+            className="text-[11px] mb-3"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--color-ink3)",
+            }}
+          >
+            por {autor.nome} · @{autor.handle}
+          </p>
+        )}
 
         {/* Squad: chips de nicho + posicoes */}
         <div className="flex items-center gap-2 flex-wrap mb-2">

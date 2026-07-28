@@ -151,8 +151,13 @@ function montarTicket(resposta: RespostaIA, textoBruto: string): TicketExtraido 
   return TicketExtraido.criar(dados);
 }
 
+// Modelo trocavel por env var (sem deploy de codigo) — o prompt "nunca e
+// finalizado cedo" (nota acima), e testar um modelo novo e parte disso.
+const MODELO_PADRAO = "claude-haiku-4-5-20251001";
+
 export class ExtratorDeTicketAnthropic implements ExtratorDeTicket {
   private readonly client: Anthropic;
+  private readonly modelo: string;
 
   constructor() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -162,15 +167,18 @@ export class ExtratorDeTicketAnthropic implements ExtratorDeTicket {
       );
     }
     this.client = new Anthropic({ apiKey });
+    this.modelo = process.env.ANTHROPIC_MODEL?.trim() || MODELO_PADRAO;
   }
 
   async extrair(textoBruto: string): Promise<TicketExtraido> {
+    const inicio = Date.now();
     const mensagem = await this.client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: this.modelo,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: textoBruto }],
     });
+    const latenciaMs = Date.now() - inicio;
 
     const bloco = mensagem.content[0];
     if (bloco.type !== "text") {
@@ -189,6 +197,21 @@ export class ExtratorDeTicketAnthropic implements ExtratorDeTicket {
     }
 
     const resposta = validarResposta(raw);
+
+    // Sinal objetivo para decidir QUANDO reavaliar o provedor/modelo — nao por
+    // vontade, por dado (mesmo espirito do criterio de reabertura do D10, ver
+    // docs/decisoes/log.md). Greppavel nos runtime logs do Vercel.
+    console.log(
+      JSON.stringify({
+        evento: "extracao_ticket",
+        modelo: this.modelo,
+        confianca: resposta.confianca,
+        latenciaMs,
+        tokensEntrada: mensagem.usage?.input_tokens,
+        tokensSaida: mensagem.usage?.output_tokens,
+      }),
+    );
+
     return montarTicket(resposta, textoBruto);
   }
 }
