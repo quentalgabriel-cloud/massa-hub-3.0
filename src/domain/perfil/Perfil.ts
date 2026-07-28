@@ -1,4 +1,5 @@
 import { Handle } from "./Handle";
+import { Email } from "./Email";
 
 // Perfil — entidade. O no da rede. Assessor e creator sao VARIACOES do mesmo
 // nucleo, nunca duas entidades soltas (spec 03). A distincao vive em `tipo`.
@@ -31,6 +32,7 @@ export interface DadosPerfil {
   estado?: EstadoPerfil; // default derivado: usuarioId => reivindicado, senao pendente
   usuarioId?: string; // auth user; obrigatorio quando reivindicado
   origem?: OrigemPerfil; // a ancora; obrigatoria quando pendente (D7)
+  email?: Email; // contato para convite de ativacao; nunca identidade
 }
 
 const TIPOS_VALIDOS: readonly TipoPerfil[] = ["assessor", "creator"];
@@ -44,6 +46,7 @@ export class Perfil {
     readonly estado: EstadoPerfil,
     readonly usuarioId: string | undefined,
     readonly origem: OrigemPerfil | undefined,
+    readonly email: Email | undefined,
   ) {}
 
   static criar(dados: DadosPerfil): Perfil {
@@ -87,6 +90,7 @@ export class Perfil {
       estado,
       usuarioId,
       dados.origem ? { ...dados.origem } : undefined,
+      dados.email,
     );
   }
 
@@ -116,6 +120,12 @@ export class Perfil {
     return this.estado === "pendente";
   }
 
+  // Registra/atualiza o contato. Imutável, como reivindicar — o e-mail é dado
+  // de contato, então mudá-lo não altera identidade nem estado do nó.
+  comEmail(email: Email): Perfil {
+    return Perfil.criar({ ...this.paraDados(), email });
+  }
+
   private paraDados(): DadosPerfil {
     return {
       id: this.id,
@@ -125,6 +135,7 @@ export class Perfil {
       estado: this.estado,
       usuarioId: this.usuarioId,
       origem: this.origem ? { ...this.origem } : undefined,
+      email: this.email,
     };
   }
 }

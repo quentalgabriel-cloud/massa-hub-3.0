@@ -195,6 +195,78 @@ export async function publicarOportunidade(
   }
 }
 
+// Convida quem foi vinculado a reivindicar o próprio nó (ativação, Fase 2).
+// Só quem vinculou pode convidar — a regra vive no caso de uso.
+const schemaConvidar = z.object({
+  perfilId: z.string().min(1),
+  email: z.string().optional(),
+});
+
+export async function convidarCreator(
+  formData: FormData,
+): Promise<Resultado<{ enviado: boolean; motivo?: string; destinatario: string }>> {
+  const supabase = await criarClienteSSR();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, erro: "Sessao expirada. Entre novamente." };
+
+  const parsed = schemaConvidar.safeParse({
+    perfilId: formData.get("perfilId"),
+    email: formData.get("email") || undefined,
+  });
+  if (!parsed.success) {
+    return { ok: false, erro: parsed.error.errors[0].message };
+  }
+
+  try {
+    const { ConvidarCreator } = await import("@aplicacao/ConvidarCreator");
+    const { PerfilRepositorioSupabase } = await import(
+      "@infra/supabase/PerfilRepositorioSupabase"
+    );
+    const { EnviadorDeEmailResend } = await import(
+      "@infra/email/EnviadorDeEmailResend"
+    );
+
+    const assessorPerfilId = await garantirPerfilAssessorId(user);
+    const caso = new ConvidarCreator(
+      new PerfilRepositorioSupabase(),
+      new EnviadorDeEmailResend(),
+    );
+
+    const saida = await caso.executar({
+      perfilId: parsed.data.perfilId,
+      assessorId: assessorPerfilId,
+      emailAlternativo: parsed.data.email,
+      urlBase: await urlBaseDaRequisicao(),
+    });
+
+    return {
+      ok: true,
+      dados: {
+        enviado: saida.enviado,
+        motivo: saida.motivo,
+        destinatario: saida.destinatario,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erro desconhecido.";
+    return { ok: false, erro: msg };
+  }
+}
+
+// A URL pública desta instância, para montar o link do convite. Preferimos a
+// env explícita; no Vercel, VERCEL_URL aponta para o deploy atual.
+async function urlBaseDaRequisicao(): Promise<string> {
+  const explicita = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (explicita) return explicita;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercel) return `https://${vercel}`;
+  const atual = process.env.VERCEL_URL?.trim();
+  if (atual) return `https://${atual}`;
+  return "http://localhost:3000";
+}
+
 // Forma serializada do Perfil vinculado para atravessar Server→Client.
 export interface PerfilVinculado {
   id: string;
@@ -202,12 +274,16 @@ export interface PerfilVinculado {
   handle: string;
   estado: "reivindicado" | "pendente";
   criouPerfil: boolean;
+  temEmail: boolean;
 }
 
 const schemaVincular = z.object({
   oportunidadeId: z.string().min(1),
   nome: z.string().min(1, "Informe o nome do creator."),
   handle: z.string().min(1, "Informe o handle do creator."),
+  // Opcional: sem e-mail o vínculo acontece igual, só não dá para convidar
+  // por e-mail (o link manual continua valendo).
+  email: z.string().optional(),
 });
 
 // Vincula um creator da rede do assessor ao squad de uma oportunidade JA
@@ -228,6 +304,7 @@ export async function vincularCreator(
     oportunidadeId: formData.get("oportunidadeId"),
     nome: formData.get("nome"),
     handle: formData.get("handle"),
+    email: formData.get("email") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, erro: parsed.error.errors[0].message };
@@ -259,6 +336,7 @@ export async function vincularCreator(
       assessorId: assessorPerfilId,
       handle: parsed.data.handle,
       nome: parsed.data.nome,
+      email: parsed.data.email,
       perfilId: crypto.randomUUID(), // usado so se um pendente novo for criado
     });
 
@@ -273,6 +351,7 @@ export async function vincularCreator(
         handle: perfil.handle.valor,
         estado: perfil.estado,
         criouPerfil,
+        temEmail: perfil.email !== undefined,
       },
     };
   } catch (err) {

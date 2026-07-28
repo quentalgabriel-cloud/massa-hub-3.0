@@ -2,6 +2,7 @@ import { PerfilRepositorio } from "@dominio/ports/PerfilRepositorio";
 import { OportunidadeRepositorio } from "@dominio/ports/OportunidadeRepositorio";
 import { Perfil } from "@dominio/perfil/Perfil";
 import { Handle } from "@dominio/perfil/Handle";
+import { Email } from "@dominio/perfil/Email";
 import { Oportunidade } from "@dominio/oportunidade/Oportunidade";
 
 // Caso de uso: o assessor traz um creator da sua rede para o squad de uma
@@ -23,6 +24,7 @@ export interface EntradaVincularCreatorAoSquad {
   handle: string; // identifica o creator (reusa se ja existir)
   nome: string;
   perfilId: string; // id a usar SE um novo perfil pendente for criado
+  email?: string; // contato opcional, para o convite de ativação (Fase 2)
 }
 
 export interface ResultadoVincularCreatorAoSquad {
@@ -63,12 +65,21 @@ export class VincularCreatorAoSquad {
     }
 
     const handle = Handle.criar(entrada.handle);
+    const email = Email.criarOpcional(entrada.email);
     const existente = await this.perfis.buscarPorHandle(handle.valor);
 
     let perfil: Perfil;
     let criouPerfil: boolean;
     if (existente) {
-      perfil = existente;
+      // Creator já na rede: completa o contato se ele ainda não tinha e o
+      // assessor informou um agora. Nunca sobrescreve um e-mail existente —
+      // o dado de quem já está na rede é dela, não de quem vincula.
+      if (email && !existente.email) {
+        perfil = existente.comEmail(email);
+        await this.perfis.salvar(perfil);
+      } else {
+        perfil = existente;
+      }
       criouPerfil = false;
     } else {
       perfil = Perfil.criar({
@@ -81,6 +92,7 @@ export class VincularCreatorAoSquad {
           vinculadoPorId: entrada.assessorId,
           vinculadoEm: new Date(),
         },
+        email,
       });
       await this.perfis.salvar(perfil);
       criouPerfil = true;
