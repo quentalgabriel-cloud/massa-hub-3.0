@@ -145,3 +145,36 @@ Critério objetivo de reavaliação (mesmo espírito da reabertura do D10 — da
 vontade): revisitar o provedor quando os logs acima mostrarem confiança média
 caindo, ou quando o volume real de oportunidades tornar o custo (não mais centavos)
 uma variável que importa. Até lá, esta decisão permanece.
+
+## D13 — Abertura da Fase 2 (2026-07-28)
+
+Decisão do fundador: encerrar a Fase 1 e abrir a Fase 2. Motivo declarado —
+**investidor e usuários de teste aguardando a rede utilizável**. Registrado como
+reorientação consciente, não desvio silencioso (protocolo da seção 6).
+
+Contexto no momento da decisão, para honestidade histórica: a Fase 1 estava
+**construída e em produção**, mas **não executada** — banco em 0 linhas (0 perfis,
+0 oportunidades, 0 provas) e o fluxo autenticado (login → extração por IA →
+publicar → vincular → reivindicar) nunca completado nem uma vez. O critério de
+sucesso da spec 02 ("o assessor usou a Massa pra estruturar uma oportunidade
+real") não foi atingido. O freio de escopo apontou isso; o fundador reafirmou com
+o motivo de negócio acima e a decisão é dele.
+
+**Risco assumido e nomeado:** com investidor e testadores olhando, um fluxo
+principal que nunca rodou é risco de exposição maior do que seria com o produto
+fechado. A primeira execução real do fluxo continua sendo o item de maior valor
+por minuto investido — não como bloqueio, mas como prioridade.
+
+O que a abertura da Fase 2 muda:
+- Saem da quarentena: camada social, mapeamento assistido de creators, matching
+  por Lastro, ativação por e-mail, onboarding de quem chega sozinho.
+- **Não** sai da quarentena: multi-agente (D10 tem critérios próprios, todos em
+  zero), Identity OS, curadoria educacional (fase 3), escopo fora da economia
+  criativa.
+- **Não** se suspende: D1 (Lastro, nunca score), D7 (nenhum perfil sem âncora de
+  trabalho real), seção 2 (o que a Massa não é), regras de monetização.
+
+Sobre o mecanismo: o freio de escopo **não foi removido**. Ele lê o CLAUDE.md —
+com a fase atualizada, deixa de disparar para escopo de Fase 2 e segue protegendo
+o que continua fora. Remover a skill teria deixado o CLAUDE.md dizendo "Fase 1" e
+recriado o atrito a cada sessão nova.

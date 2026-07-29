@@ -7,6 +7,7 @@ import {
   type OrigemPerfil,
 } from "@dominio/perfil/Perfil";
 import { Handle } from "@dominio/perfil/Handle";
+import { Email } from "@dominio/perfil/Email";
 
 // Adapter Supabase da porta PerfilRepositorio. A origem (ancora D7) e persistida
 // em colunas planas (origem_*); o handle, como string normalizada. O dominio nao
@@ -22,11 +23,12 @@ interface PerfilRow {
   origem_oportunidade_id: string | null;
   origem_vinculado_por_id: string | null;
   origem_vinculado_em: string | null;
+  email: string | null;
 }
 
 const COLUNAS =
   "id, tipo, nome, handle, estado, usuario_id, " +
-  "origem_oportunidade_id, origem_vinculado_por_id, origem_vinculado_em";
+  "origem_oportunidade_id, origem_vinculado_por_id, origem_vinculado_em, email";
 
 function rowParaPerfil(row: PerfilRow): Perfil {
   const origem: OrigemPerfil | undefined =
@@ -48,6 +50,15 @@ function rowParaPerfil(row: PerfilRow): Perfil {
     estado: row.estado,
     usuarioId: row.usuario_id ?? undefined,
     origem,
+    // Tolerante na leitura: um e-mail malformado que tenha entrado por fora
+    // (import, correção manual) não deve derrubar a leitura do perfil inteiro.
+    email: (() => {
+      try {
+        return Email.criarOpcional(row.email);
+      } catch {
+        return undefined;
+      }
+    })(),
   });
 }
 
@@ -62,6 +73,7 @@ function perfilParaRow(p: Perfil): PerfilRow {
     origem_oportunidade_id: p.origem?.oportunidadeId ?? null,
     origem_vinculado_por_id: p.origem?.vinculadoPorId ?? null,
     origem_vinculado_em: p.origem?.vinculadoEm.toISOString() ?? null,
+    email: p.email?.valor ?? null,
   };
 }
 

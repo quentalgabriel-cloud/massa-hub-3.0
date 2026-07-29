@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { extrairTicket, publicarOportunidade, vincularCreator } from "./actions";
+import {
+  extrairTicket,
+  publicarOportunidade,
+  vincularCreator,
+  convidarCreator,
+} from "./actions";
 import type { TicketSerializado, PerfilVinculado } from "./actions";
 
 // ──────────────────────────────────────────────
@@ -363,9 +368,114 @@ function LinkReivindicacao({ perfilId }: { perfilId: string }) {
   );
 }
 
+// Convite de ativação: manda o link de reivindicação por e-mail. Se o perfil
+// não tem contato, pede um na hora. Falha de envio NÃO é erro do vínculo —
+// mostra o motivo e o link manual segue logo abaixo.
+function BotaoConvidar({
+  perfilId,
+  temEmail,
+}: {
+  perfilId: string;
+  temEmail: boolean;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const [email, setEmail] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function enviar(comEmail?: string) {
+    startTransition(async () => {
+      setMsg(null);
+      const fd = new FormData();
+      fd.set("perfilId", perfilId);
+      if (comEmail?.trim()) fd.set("email", comEmail.trim());
+      const res = await convidarCreator(fd);
+      if (!res.ok) {
+        setMsg({ ok: false, texto: res.erro });
+        return;
+      }
+      setAberto(false);
+      setMsg(
+        res.dados.enviado
+          ? { ok: true, texto: `convite enviado para ${res.dados.destinatario} ✓` }
+          : {
+              ok: false,
+              texto: res.dados.motivo ?? "não foi possível enviar agora",
+            },
+      );
+    });
+  }
+
+  const estilo = {
+    color: "var(--color-violet)",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.7rem",
+  } as const;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {!aberto && (
+        <button
+          onClick={() => (temEmail ? enviar() : setAberto(true))}
+          disabled={isPending}
+          className="text-left underline underline-offset-2 disabled:opacity-40"
+          style={estilo}
+        >
+          {isPending ? "enviando…" : "enviar convite por e-mail"}
+        </button>
+      )}
+
+      {aberto && (
+        <div className="flex items-center gap-1.5">
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="e-mail do creator"
+            type="email"
+            autoFocus
+            autoCapitalize="none"
+            autoCorrect="off"
+            className="h-9 flex-1 rounded-[6px] border px-2 outline-none"
+            style={{
+              borderColor: "var(--color-line)",
+              background: "var(--color-paper)",
+              color: "var(--color-ink)",
+              fontSize: "16px",
+            }}
+          />
+          <button
+            onClick={() => enviar(email)}
+            disabled={isPending || email.trim().length < 5}
+            className="h-9 px-3 rounded-[6px] font-semibold disabled:opacity-40"
+            style={{
+              background: "var(--color-violet)",
+              color: "#fff",
+              fontSize: "0.75rem",
+            }}
+          >
+            enviar
+          </button>
+        </div>
+      )}
+
+      {msg && (
+        <span
+          style={{
+            ...estilo,
+            color: msg.ok ? "var(--color-ink3)" : "#cc3300",
+          }}
+        >
+          {msg.texto}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) {
   const [nome, setNome] = useState("");
   const [handle, setHandle] = useState("");
+  const [email, setEmail] = useState("");
   const [vinculados, setVinculados] = useState<PerfilVinculado[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -377,6 +487,7 @@ function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) 
       fd.set("oportunidadeId", oportunidadeId);
       fd.set("nome", nome.trim());
       fd.set("handle", handle.trim());
+      if (email.trim()) fd.set("email", email.trim());
       const res = await vincularCreator(fd);
       if (res.ok) {
         // Evita duplicar visualmente se o mesmo handle for reusado.
@@ -387,6 +498,7 @@ function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) 
         );
         setNome("");
         setHandle("");
+        setEmail("");
       } else {
         setErro(res.erro);
       }
@@ -452,9 +564,14 @@ function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) 
                     : "vinculado · na rede"}
                 </span>
               </div>
-              {/* Sem e-mail na Fase 1 (growth loop da Fase 2): o assessor
-                  compartilha o link de reivindicacao manualmente. */}
-              {p.estado === "pendente" && <LinkReivindicacao perfilId={p.id} />}
+              {/* Ativação (Fase 2): convite por e-mail quando há contato; o
+                  link manual continua como caminho alternativo, sempre. */}
+              {p.estado === "pendente" && (
+                <div className="flex flex-col gap-1.5">
+                  <BotaoConvidar perfilId={p.id} temEmail={p.temEmail} />
+                  <LinkReivindicacao perfilId={p.id} />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -485,6 +602,24 @@ function PainelVincularCreators({ oportunidadeId }: { oportunidadeId: string }) 
             background: "var(--color-paper)",
             color: "var(--color-ink)",
             fontFamily: "var(--font-mono)",
+            fontSize: "16px",
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-violet)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
+        />
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="e-mail (opcional — para convidar)"
+          type="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          className="h-11 rounded-[8px] border px-3 text-sm outline-none transition-colors"
+          style={{
+            borderColor: "var(--color-line)",
+            background: "var(--color-paper)",
+            color: "var(--color-ink)",
             fontSize: "16px",
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-violet)")}

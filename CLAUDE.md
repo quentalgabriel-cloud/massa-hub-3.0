@@ -66,38 +66,61 @@ Se um pedido meu empurrar o produto para qualquer um desses, **me avise**.
   base degradável e suja a proposta de reputação. Cada perfil criado deve nascer
   com pelo menos uma colaboração/prova ligada a ele.
 
-## 4. Trilho atual — Fase 1 (foco ABSOLUTO)
+## 4. Trilho atual — Fase 2 (aberta em 2026-07-28)
 
-**O único objetivo da Fase 1 é o Módulo de Oportunidades funcional.**
+### Fase 1 — ENCERRADA (código completo, em produção)
 
-É o produto de entrada e o diferencial competitivo. É o único mecanismo que
-entrega valor single-player antes de a rede atingir densidade.
+O Módulo de Oportunidades está construído e no ar (PR #9, 7 ondas): extração de
+ticket por IA, Screen 10, Lastro (prova bilateral), claim profile do assessor,
+página pública `/handle`, rede tecida (oportunidade ⇄ perfil ⇄ prova), namespace
+de identidade unificado. 109 testes, schema aplicado no Supabase.
 
-Escopo liberado para construir agora:
-- Módulo de oportunidades: ticket estruturado a partir de texto bruto (WhatsApp/
-  e-mail) via extração por IA. Suporte a squads e múltiplos papéis.
-- Tela de publicação do ticket (a "Screen 10" dos protótipos).
-- Modelo de dados do Lastro (prova bilateral) — fechar ANTES de construir UI de reputação.
-- Claim profile mínimo do assessor (para ele trazer a rede ao abrir oportunidade).
+⚠️ **Ressalva registrada:** a Fase 1 foi encerrada por decisão do fundador com o
+fluxo autenticado ainda não executado nenhuma vez em produção (banco em 0 linhas
+na data de abertura da Fase 2). O critério original da spec 02 — "o assessor usou
+a Massa pra estruturar uma oportunidade real" — não foi atingido. Ver D13.
 
-Já existe no produto: auth Google, cadastro de perfil (8 especialidades),
-exploração com filtros, páginas públicas /handle, ~19 perfis.
+### Fase 2 — trilho atual
 
-## 5. Em QUARENTENA — não construir agora (anti-padrão #1)
+**Motivo da abertura:** investidor e usuários de teste aguardando a rede
+utilizável. Decisão consciente do fundador em 2026-07-28 (ver D13 no log).
 
-Estas áreas estão proibidas nesta fase. Se eu pedir, me lembre que estão em quarentena:
+**Objetivo:** a rede deixa de ser single-player e passa a suportar pessoas reais
+entrando, se encontrando e acumulando Lastro.
 
-- 🚫 **Identity OS** (pipeline multi-agente de identidade). Tem valor técnico real,
-  mas é expansão de tese antes de executar tese. Fora do trilho.
-- 🚫 **Mapeamento em massa de creators via skill.** Gera base degradável, suja a
-  reputação. É alavanca da fase 2, não agora.
-- 🚫 **Camada social** (feed, conexões, postagens) — só na fase 2, após densidade.
+Escopo liberado agora:
+- **Ativação por e-mail** — o creator vinculado recebe convite para reivindicar
+  (era o growth loop adiado da Fase 1).
+- **Onboarding de quem chega sozinho** — hoje só existe nó para quem publica ou é
+  vinculado. Usuário de teste que loga precisa conseguir existir na rede.
+- **Exploração / diretório de perfis** — encontrar quem está na rede.
+- **Camada social mínima** (conexões, atividade) — antes travada por "densidade".
+- **Matching por Lastro** — casar oportunidade e perfil por fatos, não por score.
+- **Mapeamento assistido de creators** — sai da quarentena, mas **D7 continua
+  valendo**: nenhum perfil nasce sem âncora de trabalho real.
+
+## 5. Em QUARENTENA — não construir (anti-padrão #1)
+
+Se eu pedir, me lembre que estão em quarentena:
+
 - 🚫 **Curadoria educacional e clube de ferramentas** — fase 3.
-- 🚫 **Sistema multi-agente** (orchestrator + agentes autônomos em paralelo). A IA da
-  Fase 1 é UM agente, UMA chamada (extração de ticket). Multi-agente resolve escala
-  inexistente com ~19 perfis e é a mesma sereia do Identity OS com roupa nova. Se
-  voltar a tese de "times de IA", lembre: pipeline determinístico testável > enxame
-  autônomo. Reavaliar só na fase 2+, e mesmo lá como pipeline, não enxame.
+- 🚫 **Identity OS** (pipeline multi-agente de identidade) — continua fora.
+- 🚫 **Sistema multi-agente** (orchestrator + agentes autônomos em paralelo).
+  A abertura da Fase 2 **não** libera isto automaticamente: D10 tem critérios
+  objetivos próprios (volume real de oportunidades circulando, features que dão o
+  que orquestrar, dataset de eval em platô). Nenhum deles foi atingido — todos
+  estão em zero. Pipeline determinístico testável > enxame autônomo.
+- 🚫 **Escopo fora da economia criativa** (ex.: Patteo/imobiliário) — não absorver
+  sob "é tudo Feel" sem decisão registrada.
+
+### O que a Fase 2 NÃO suspende
+
+Estas continuam invioláveis, independentemente de fase:
+- **D1** — Reputação é Lastro (fatos contáveis), nunca score.
+- **D7** — nenhum perfil sem âncora de trabalho real. Vale inclusive para o
+  mapeamento assistido e para qualquer onboarding novo.
+- **§2** — não virar vitrine, marketplace transacional nem rede de creators.
+- **Monetização** — sem publicidade, destaque pago ou venda de dados.
 
 ## 6. ANTI-PADRÃO #1 — leia isto sempre
 

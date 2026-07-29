@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Perfil, type DadosPerfil } from "@dominio/perfil/Perfil";
 import { Handle } from "@dominio/perfil/Handle";
+import { Email } from "@dominio/perfil/Email";
 
 const origemValida = {
   oportunidadeId: "op-natura-set",
@@ -132,5 +133,39 @@ describe("Perfil — reivindicacao (a pessoa assume o perfil pendente)", () => {
     expect(pendente.estado).toBe("pendente");
     expect(pendente.usuarioId).toBeUndefined();
     expect(reivindicado).not.toBe(pendente);
+  });
+});
+
+describe("Perfil — email de contato (opcional)", () => {
+  it("nasce sem email quando nao informado", () => {
+    expect(perfilPendente().email).toBeUndefined();
+  });
+
+  it("guarda o email quando informado", () => {
+    const perfil = Perfil.criar({
+      ...perfilPendente(),
+      email: Email.criar("ana@marca.com"),
+    });
+    expect(perfil.email?.valor).toBe("ana@marca.com");
+  });
+
+  it("preserva o email ao reivindicar (o contato nao se perde)", () => {
+    const pendente = Perfil.criar({
+      ...perfilPendente(),
+      email: Email.criar("ana@marca.com"),
+    });
+    expect(pendente.reivindicar("user-ana").email?.valor).toBe("ana@marca.com");
+  });
+
+  it("email nao afeta D7: pendente sem origem continua recusado", () => {
+    expect(() =>
+      Perfil.criar({
+        id: "p-x",
+        tipo: "creator",
+        nome: "Sem Ancora",
+        handle: Handle.criar("sem-ancora"),
+        email: Email.criar("x@marca.com"),
+      }),
+    ).toThrow();
   });
 });
