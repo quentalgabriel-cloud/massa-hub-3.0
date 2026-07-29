@@ -18,6 +18,7 @@ const repositorioMock = {
   salvar: vi.fn().mockResolvedValue(undefined),
   listarAbertas: vi.fn(),
   listarPorAutor: vi.fn(),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
 };
 
 describe("PublicarOportunidade", () => {

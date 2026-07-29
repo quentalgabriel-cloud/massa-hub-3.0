@@ -39,18 +39,21 @@ function repos(over: {
     buscarPorUsuario: vi.fn(),
     salvar: vi.fn(),
     listarPendentesVinculadosPor: vi.fn(),
+    listar: vi.fn().mockResolvedValue([]),
   };
   const oportunidades = {
     buscarPorId: vi.fn(),
     salvar: vi.fn(),
     listarAbertas: vi.fn(),
     listarPorAutor: vi.fn().mockResolvedValue(over.oportunidades ?? []),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
   };
   const provas = {
     buscarPorId: vi.fn(),
     salvar: vi.fn(),
     listarPorCriador: vi.fn(),
     listarPorParte: vi.fn().mockResolvedValue(over.provas ?? []),
+    listarPorPartes: vi.fn().mockResolvedValue([]),
   };
   return { perfis, oportunidades, provas };
 }

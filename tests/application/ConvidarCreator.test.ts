@@ -35,6 +35,7 @@ function perfisMock(perfil: Perfil | null, over: Record<string, unknown> = {}) {
     buscarPorUsuario: vi.fn(),
     salvar: vi.fn().mockResolvedValue(undefined),
     listarPendentesVinculadosPor: vi.fn(),
+    listar: vi.fn().mockResolvedValue([]),
     ...over,
   };
 }

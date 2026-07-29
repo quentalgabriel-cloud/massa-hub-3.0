@@ -11,4 +11,7 @@ export interface ProvaRepositorio {
   // Provas em que o perfil e parte (criador OU contratante) — base para listar
   // pendencias de assinatura e, depois, o lastro da pessoa.
   listarPorParte(perfilId: string): Promise<Prova[]>;
+  // Mesma coisa para VARIOS perfis numa consulta — usado ao explorar a rede,
+  // onde derivar o Lastro perfil a perfil seria N+1.
+  listarPorPartes(perfilIds: string[]): Promise<Prova[]>;
 }

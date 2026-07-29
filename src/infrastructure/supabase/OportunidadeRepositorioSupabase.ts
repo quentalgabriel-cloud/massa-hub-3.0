@@ -160,4 +160,19 @@ export class OportunidadeRepositorioSupabase implements OportunidadeRepositorio 
     if (error || !data) return [];
     return (data as unknown as OportunidadeRow[]).map(rowParaOportunidade);
   }
+
+  async listarPorAutores(autorIds: string[]): Promise<Oportunidade[]> {
+    const ids = [...new Set(autorIds)];
+    if (ids.length === 0) return [];
+
+    const { data, error } = await this.cliente
+      .from("oportunidades")
+      .select(COLUNAS)
+      .in("autor_id", ids)
+      .order("criado_em", { ascending: false })
+      .limit(500);
+
+    if (error || !data) return [];
+    return (data as unknown as OportunidadeRow[]).map(rowParaOportunidade);
+  }
 }

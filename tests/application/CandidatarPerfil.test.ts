@@ -31,6 +31,7 @@ describe("CandidatarPerfil", () => {
       salvar: vi.fn().mockResolvedValue(undefined),
       listarAbertas: vi.fn(),
       listarPorAutor: vi.fn(),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
     };
     const caso = new CandidatarPerfil(repositorioMock);
     const resultado = await caso.executar({
@@ -47,6 +48,7 @@ describe("CandidatarPerfil", () => {
       salvar: vi.fn(),
       listarAbertas: vi.fn(),
       listarPorAutor: vi.fn(),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
     };
     const caso = new CandidatarPerfil(repositorioMock);
     await expect(
@@ -60,6 +62,7 @@ describe("CandidatarPerfil", () => {
       salvar: vi.fn(),
       listarAbertas: vi.fn(),
       listarPorAutor: vi.fn(),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
     };
     const caso = new CandidatarPerfil(repositorioMock);
     await expect(

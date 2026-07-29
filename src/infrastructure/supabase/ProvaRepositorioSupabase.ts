@@ -128,22 +128,33 @@ export class ProvaRepositorioSupabase implements ProvaRepositorio {
   }
 
   async listarPorParte(perfilId: string): Promise<Prova[]> {
-    // Busca todas as provas onde perfilId é criador OU contratante.
+    return this.listarPorPartes([perfilId]);
+  }
+
+  async listarPorPartes(perfilIds: string[]): Promise<Prova[]> {
+    // Ids entram num filtro PostgREST montado como string: sanitiza para que
+    // vírgula/parêntese num id não consiga reescrever a expressão do filtro.
+    const ids = [...new Set(perfilIds)].filter((id) =>
+      /^[A-Za-z0-9._:-]+$/.test(id),
+    );
+    if (ids.length === 0) return [];
+
+    const lista = ids.join(",");
     const { data: provas, error } = await this.cliente
       .from("provas")
       .select(COLUNAS_PROVA)
-      .or(`criador_id.eq.${perfilId},contratante_id.eq.${perfilId}`)
-      .limit(50);
+      .or(`criador_id.in.(${lista}),contratante_id.in.(${lista})`)
+      .limit(500);
     if (error) throw new Error(`Erro ao listar provas: ${error.message}`);
     if (!provas || provas.length === 0) return [];
 
     const linhas = provas as ProvaRow[];
-    const ids = linhas.map((p) => p.id);
+    const idsDeProvas = linhas.map((p) => p.id);
 
     const { data: assinaturas, error: erroAss } = await this.cliente
       .from("assinaturas")
       .select(COLUNAS_ASSINATURA)
-      .in("prova_id", ids)
+      .in("prova_id", idsDeProvas)
       .limit(1000);
     if (erroAss) {
       throw new Error(`Erro ao listar assinaturas: ${erroAss.message}`);
