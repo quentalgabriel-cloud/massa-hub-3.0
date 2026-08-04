@@ -1,5 +1,8 @@
 import { criarClienteServidor } from "./cliente";
-import type { PerfilRepositorio } from "@dominio/ports/PerfilRepositorio";
+import type {
+  PerfilRepositorio,
+  FiltroPerfis,
+} from "@dominio/ports/PerfilRepositorio";
 import {
   Perfil,
   type TipoPerfil,
@@ -135,6 +138,26 @@ export class PerfilRepositorioSupabase implements PerfilRepositorio {
     if (error) {
       throw new Error(`PerfilRepositorioSupabase.salvar: ${error.message}`);
     }
+  }
+
+  async listar(filtro: FiltroPerfis = {}): Promise<Perfil[]> {
+    let q = this.cliente.from("perfis").select(COLUNAS);
+
+    if (filtro.tipo) q = q.eq("tipo", filtro.tipo);
+
+    const busca = filtro.busca?.trim();
+    if (busca) {
+      // Escapa os curingas do LIKE e a vírgula, que separa termos no `or`.
+      const termo = busca.replace(/[%_,()]/g, " ").trim();
+      if (termo) q = q.or(`nome.ilike.%${termo}%,handle.ilike.%${termo}%`);
+    }
+
+    const { data, error } = await q
+      .order("criado_em", { ascending: false })
+      .limit(filtro.limite ?? 50);
+
+    if (error || !data) return [];
+    return (data as unknown as PerfilRow[]).map(rowParaPerfil);
   }
 
   async listarPendentesVinculadosPor(assessorId: string): Promise<Perfil[]> {

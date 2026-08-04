@@ -25,6 +25,7 @@ function perfisMock(overrides: Record<string, unknown> = {}) {
     buscarPorUsuario: vi.fn().mockResolvedValue(null),
     salvar: vi.fn().mockResolvedValue(undefined),
     listarPendentesVinculadosPor: vi.fn(),
+    listar: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }

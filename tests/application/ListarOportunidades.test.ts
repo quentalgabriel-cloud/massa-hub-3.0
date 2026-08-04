@@ -34,6 +34,7 @@ const repositorioMock = {
   salvar: vi.fn(),
   listarAbertas: vi.fn().mockResolvedValue([op1, op2, op3]),
   listarPorAutor: vi.fn(),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
 };
 
 const assessor1 = Perfil.criar({
@@ -52,6 +53,7 @@ function perfisMock(over: Record<string, unknown> = {}) {
     buscarPorUsuario: vi.fn(),
     salvar: vi.fn(),
     listarPendentesVinculadosPor: vi.fn(),
+    listar: vi.fn().mockResolvedValue([]),
     ...over,
   };
 }

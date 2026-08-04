@@ -16,8 +16,12 @@ class RepoFake implements ProvaRepositorio {
     return [...this.mapa.values()].filter((p) => p.criadorId === criadorId);
   }
   async listarPorParte(perfilId: string) {
+    return this.listarPorPartes([perfilId]);
+  }
+  async listarPorPartes(perfilIds: string[]) {
+    const ids = new Set(perfilIds);
     return [...this.mapa.values()].filter(
-      (p) => p.criadorId === perfilId || p.contratanteId === perfilId,
+      (p) => ids.has(p.criadorId) || ids.has(p.contratanteId),
     );
   }
 }

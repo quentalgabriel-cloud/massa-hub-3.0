@@ -30,6 +30,7 @@ function perfisMock(overrides: Record<string, unknown> = {}) {
     buscarPorUsuario: vi.fn(),
     salvar: vi.fn().mockResolvedValue(undefined),
     listarPendentesVinculadosPor: vi.fn(),
+    listar: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
@@ -40,6 +41,7 @@ function oportunidadesMock(op: Oportunidade | null) {
     salvar: vi.fn().mockResolvedValue(undefined),
     listarAbertas: vi.fn(),
     listarPorAutor: vi.fn(),
+    listarPorAutores: vi.fn().mockResolvedValue([]),
   };
 }
 

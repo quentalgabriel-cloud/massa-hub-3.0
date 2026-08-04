@@ -16,4 +16,12 @@ export interface PerfilRepositorio {
   // Perfis pendentes que um assessor trouxe pela oportunidade — a rede que ele
   // vinculou mas que ainda nao se reivindicou (spec 03, claim profile).
   listarPendentesVinculadosPor(assessorId: string): Promise<Perfil[]>;
+  // Explorar a rede: quem esta nela. `busca` casa nome ou handle.
+  listar(filtro?: FiltroPerfis): Promise<Perfil[]>;
+}
+
+export interface FiltroPerfis {
+  busca?: string;
+  tipo?: "assessor" | "creator";
+  limite?: number;
 }

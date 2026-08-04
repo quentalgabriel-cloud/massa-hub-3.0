@@ -8,4 +8,7 @@ export interface OportunidadeRepositorio {
   salvar(oportunidade: Oportunidade): Promise<void>;
   listarAbertas(limite?: number): Promise<Oportunidade[]>;
   listarPorAutor(autorId: string): Promise<Oportunidade[]>;
+  // Varios autores numa consulta — usado ao explorar a rede, onde contar as
+  // oportunidades de cada assessor separadamente seria N+1.
+  listarPorAutores(autorIds: string[]): Promise<Oportunidade[]>;
 }

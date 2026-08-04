@@ -36,6 +36,17 @@ export default async function LayoutAutenticado({
         </Link>
         <nav className="flex items-center gap-1">
           <Link
+            href="/rede"
+            className="text-sm px-3 flex items-center"
+            style={{
+              color: "var(--color-ink3)",
+              fontFamily: "var(--font-mono)",
+              minHeight: "44px",
+            }}
+          >
+            rede
+          </Link>
+          <Link
             href="/meu-perfil"
             className="text-sm px-3 flex items-center"
             style={{
